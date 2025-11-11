@@ -4,7 +4,8 @@
   "description": "Early stage Geometry Dash level requests",
   "main": "dist/core.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "tsc && node ."
   },
   "repository": {
     "type": "git",
