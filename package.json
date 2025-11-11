@@ -1,0 +1,27 @@
+{
+  "name": "gdreqbot",
+  "version": "1.0.0",
+  "description": "Early stage Geometry Dash level requests",
+  "main": "dist/core.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GalaxyVinci05/gdreqbot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GalaxyVinci05/gdreqbot/issues"
+  },
+  "homepage": "https://github.com/GalaxyVinci05/gdreqbot#readme",
+  "dependencies": {
+    "@twurple/api": "^7.4.0",
+    "@twurple/auth": "^7.4.0",
+    "@twurple/chat": "^7.4.0",
+    "@twurple/easy-bot": "^7.4.0",
+    "dotenv": "^17.2.3"
+  }
+}
