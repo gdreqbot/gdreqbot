@@ -1,6 +1,7 @@
 import { RefreshingAuthProvider } from "@twurple/auth";
 import { ChatClient, ChatClientOptions } from "@twurple/chat";
 import fs from "fs";
+import MapDB from "@galaxy05/map.db";
 import { config } from "dotenv";
 config({ quiet: true });
 
@@ -31,6 +32,7 @@ class Gdreqbot extends ChatClient {
     commands: Map<string, BaseCommand>;
     cmdLoader: CommandLoader;
     logger: Logger;
+    db: MapDB;
 
     constructor(options: ChatClientOptions) {
         super(options);
@@ -38,6 +40,7 @@ class Gdreqbot extends ChatClient {
         this.commands = new Map();
         this.cmdLoader = new CommandLoader();
         this.logger = new Logger();
+        this.db = new MapDB("data.db");
     }
 }
 
@@ -57,6 +60,20 @@ for (const file of cmdFiles) {
 
 client.connect();
 client.onMessage(async (channel, user, text, msg) => {
+    if (text.length >= 5) {
+        let isId = true;
+        for (let i = 0; i < text.length; i++) {
+            if (isNaN(parseInt(text[i]))) {
+                isId = false;
+                break;
+            }
+        }
+
+        if (isId) {
+            // get level
+        }
+    }
+
     if (!text.startsWith(prefix)) return;
     let cmd = client.commands.get(text.slice(1));
 
