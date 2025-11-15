@@ -2,12 +2,13 @@ import Gdreqbot from "../core";
 import BaseCommand, { MsgData } from "../structs/BaseCommand";
 import { LevelData, ResCode } from "../modules/Request";
 
-export = class RemoveCommand extends BaseCommand {
+export = class PosCommand extends BaseCommand {
     constructor() {
         super({
-            name: "remove",
-            description: "Remove your last level from the queue",
-            aliases: ["rm", "oops"],
+            name: "pos",
+            description: "Get your level's position in the queue, or a specific one",
+            args: "[<query>]",
+            aliases: ["p", "position"],
             enabled: true
         });
     }
@@ -16,19 +17,17 @@ export = class RemoveCommand extends BaseCommand {
         let { channel } = msg;
         let levels: LevelData[] = client.db.get("levels");
         let query = "";
-        if (msg.user == "galaxyvinci05") {
-            if (args[0])
-                query = args.join(" ");
-            else query = levels[levels.length-1]?.id;
+        if (args[0]) {
+            query = args.join(" ");
         } else {
             let usrLvls = levels.filter(l => l.user == msg.user);
             if (!usrLvls?.length)
                 return client.say(channel, "Kappa You don't have any levels in the queue.", { replyTo: msg.msg });
 
-            query = usrLvls[usrLvls.length - 1].id;
+            query = usrLvls[0].id;
         }
 
-        let res = await client.req.removeLevel(client, query);
+        let res = client.req.getLevel(client, query);
 
         switch (res.status) {
             case ResCode.EMPTY: {
@@ -41,13 +40,8 @@ export = class RemoveCommand extends BaseCommand {
                 break;
             }
 
-            case ResCode.ERROR: {
-                client.say(channel, "An error occurred.", { replyTo: msg.msg });
-                break;
-            }
-
             case ResCode.OK: {
-                client.say(channel, `PogChamp Removed '${res.level[0].name}' by ${res.level[0].creator} from the queue.`, { replyTo: msg.msg });
+                client.say(channel, `${args[0] ? `'${res.level.name}'` : `Your level (${res.level.name})`} is at position ${res.lvlPos} in the queue.`, { replyTo: msg.msg });
                 break;
             }
         }

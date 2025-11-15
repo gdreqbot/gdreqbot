@@ -25,17 +25,17 @@ export = class SetCommand extends BaseCommand {
 
         switch (res.status) {
             case ResCode.INVALID_KEY: {
-                client.say(channel, "Error: invalid key");
+                client.say(channel, "Error: invalid key", { replyTo: msg.msg });
                 break;
             }
 
             case ResCode.INVALID_VALUE: {
-                client.say(channel, "Error: invalid value");
+                client.say(channel, "Error: invalid value", { replyTo: msg.msg });
                 break;
             }
 
             case ResCode.OK: {
-                client.say(channel, `Set '${args[0]}' to '${args[1]}'`);
+                client.say(channel, `Set '${args[0]}' to '${args[1]}'`, { replyTo: msg.msg });
                 break;
             }
         }

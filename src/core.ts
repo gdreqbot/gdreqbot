@@ -63,54 +63,50 @@ for (const file of cmdFiles) {
 
 client.connect();
 
+client.onConnect(() => {
+    client.logger.log("Ready");
+});
+
 client.onMessage(async (channel, user, text, msg) => {
-    if (text.length >= 5) {
-        let isId = true;
-        for (let i = 0; i < text.length; i++) {
-            if (isNaN(parseInt(text[i]))) {
-                isId = false;
+    let isId = text.match(/\b\d{5,9}\b/);
+
+    if (isId) {
+        let res = await client.req.addLevel(client, isId[0], user);
+            
+        switch (res.status) {
+            case ResCode.NOT_FOUND: {
+                client.say(channel, "Kappa Couldn't find a level matching that ID.", { replyTo: msg });
                 break;
             }
-        }
 
-        if (isId) {
-            let res = await client.req.addLevel(client, text, user);
-            
-            switch (res.status) {
-                case ResCode.NOT_FOUND: {
-                    client.say(channel, "Kappa Couldn't find a level matching that ID.");
-                    break;
-                }
+            case ResCode.ALREADY_ADDED: {
+                client.say(channel, "Kappa That level is already in the queue.", { replyTo: msg });
+                break;
+            }
 
-                case ResCode.ALREADY_ADDED: {
-                    client.say(channel, "Kappa That level is already in the queue.");
-                    break;
-                }
+            case ResCode.MAX_PER_USER: {
+                client.say(channel, "Kappa You have the max amount of levels in the queue (2)", { replyTo: msg });
+                break;
+            }
 
-                case ResCode.MAX_PER_USER: {
-                    client.say(channel, "Kappa You have the max amount of levels in the queue (2)");
-                    break;
-                }
+            case ResCode.DISABLED: {
+                client.say(channel, "Kappa Requests are disabled.", { replyTo: msg });
+                break;
+            }
 
-                case ResCode.DISABLED: {
-                    client.say(channel, "Kappa Requests are disabled.");
-                    break;
-                }
+            case ResCode.ERROR: {
+                client.say(channel, "An error occurred.", { replyTo: msg });
+                break;
+            }
 
-                case ResCode.ERROR: {
-                    client.say(channel, "An error occurred.");
-                    break;
-                }
-
-                case ResCode.OK: {
-                    client.say(channel, `PogChamp Added '${res.level.name}' (${res.level.id}) by ${res.level.creator} to the queue at position ${client.db.get("levels").length}`);
-                    break;
-                }
+            case ResCode.OK: {
+                client.say(channel, `PogChamp Added '${res.level.name}' (${res.level.id}) by ${res.level.creator} to the queue at position ${client.db.get("levels").length}`, { replyTo: msg });
+                break;
             }
         }
     }
 
-    if (!text.startsWith(prefix)) return;
+    if (!text.startsWith(prefix) || isId) return;
 
     let args = text.slice(prefix.length).trim().split(/ +/);
     let cmdName = args.shift().toLowerCase();
@@ -122,7 +118,7 @@ client.onMessage(async (channel, user, text, msg) => {
     try {
         await cmd.run(client, { channel, user, text, msg }, args);
     } catch (e) {
-        client.say(channel, `An error occurred running command: ${cmd.config.name}`);
+        client.say(channel, `An error occurred running command: ${cmd.config.name}`, { replyTo: msg });
         console.error(e);
     }
 });

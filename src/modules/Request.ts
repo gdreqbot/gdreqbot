@@ -73,16 +73,16 @@ class Request {
         }
     }
 
-    async removeLevel(client: Gdreqbot, id: string) {
+    async removeLevel(client: Gdreqbot, query: string) {
         let levels: LevelData[] = client.db.get("levels");
         if (!levels.length)
             return { status: ResCode.EMPTY };
 
-        let idx = levels.findIndex(l => l.id == id || l.name.toLowerCase() == id.toLowerCase());
-        if (idx == -1)
+        let pos = levels.findIndex(l => l.id == query || l.name.toLowerCase() == query.toLowerCase());
+        if (pos == -1)
             return { status: ResCode.NOT_FOUND };
 
-        let level = levels.splice(idx, 1);
+        let level = levels.splice(pos, 1);
 
         try {
             await client.db.set("levels", levels);
@@ -92,6 +92,26 @@ class Request {
         }
 
         return { status: ResCode.OK, level };
+    }
+
+    getLevel(client: Gdreqbot, query?: string) {
+        let levels: LevelData[] = client.db.get("levels");
+        if (!levels.length)
+            return { status: ResCode.EMPTY };
+
+        let level;
+        if (query) {
+            level = levels.find(l => l.id == query)
+                || levels.find(l => l.name.toLowerCase() == query.toLowerCase());
+
+            if (!level)
+                return { status: ResCode.NOT_FOUND };
+        } else {
+            level = levels[0];
+        }
+
+        let pos = levels.findIndex(l => l.id == query || l.name.toLowerCase() == query.toLowerCase());
+        return { status: ResCode.OK, level, lvlPos: pos+1 };
     }
 
     async clear(client: Gdreqbot) {

@@ -19,17 +19,17 @@ export = class NextCommand extends BaseCommand {
 
         switch (res.status) {
             case ResCode.EMPTY: {
-                client.say(channel, "Kappa The queue is empty.");
+                client.say(channel, "Kappa The queue is empty.", { replyTo: msg.msg });
                 break;
             }
 
             case ResCode.ERROR: {
-                client.say(channel, "An error occurred.");
+                client.say(channel, "An error occurred.", { replyTo: msg.msg });
                 break;
             }
 
             case ResCode.OK: {
-                client.say(msg.channel, `PogChamp Next level: '${res.level.name}' (${res.level.id}) by ${res.level.creator}`);
+                client.say(msg.channel, `PogChamp Next level: '${res.level.name}' (${res.level.id}) by ${res.level.creator}`, { replyTo: msg.msg });
                 break;
             }
         }

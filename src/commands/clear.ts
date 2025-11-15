@@ -19,12 +19,12 @@ export = class ClearCommand extends BaseCommand {
 
         switch (res.status) {
             case ResCode.EMPTY: {
-                client.say(channel, "Kappa The queue is empty.");
+                client.say(channel, "Kappa The queue is empty.", { replyTo: msg.msg });
                 break;
             }
 
             case ResCode.OK: {
-                client.say(channel, `PogChamp Queue cleared.`);
+                client.say(channel, `PogChamp Queue cleared.`, { replyTo: msg.msg });
                 break;
             }
         }

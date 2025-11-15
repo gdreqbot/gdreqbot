@@ -18,23 +18,23 @@ export = class ListCommand extends BaseCommand {
         let levels: LevelData[] = client.db.get("levels");
         let page = parseInt(args[0]);
         if (args[0] && isNaN(page))
-            return client.say(channel, "Kappa Sir that's not a number.");
+            return client.say(channel, "Kappa Sir that's not a number.", { replyTo: msg.msg });
 
         let res = client.req.list(client, page);
 
         switch (res.status) {
             case ResCode.EMPTY: {
-                client.say(channel, "Kappa The queue is empty.");
+                client.say(channel, "Kappa The queue is empty.", { replyTo: msg.msg });
                 break;
             }
 
             case ResCode.END: {
-                client.say(channel, "Kappa There aren't that many pages.");
+                client.say(channel, "Kappa There aren't that many pages.", { replyTo: msg.msg });
                 break;
             }
 
             case ResCode.OK: {
-                client.say(channel, `Page ${page || "1"} of ${res.pages} (${levels.length} levels) | ${res.page.map(l => `${l.pos}. ${l.name} (${l.id})`).join(" - ")}`);
+                client.say(channel, `Page ${page || "1"} of ${res.pages} (${levels.length} levels) | ${res.page.map(l => `${l.pos}. ${l.name} (${l.id})`).join(" - ")}`, { replyTo: msg.msg });
                 break;
             }
         }
