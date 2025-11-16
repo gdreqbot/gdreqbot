@@ -1,6 +1,8 @@
+import { ChatMessage } from "@twurple/chat";
 import Gdreqbot from "../core";
-import { LevelData, ResCode } from "../modules/Request";
-import BaseCommand, { MsgData } from "../structs/BaseCommand";
+import { ResCode } from "../modules/Request";
+import BaseCommand from "../structs/BaseCommand";
+import PermLevels from "../structs/PermLevels";
 
 export = class NextCommand extends BaseCommand {
     constructor() {
@@ -9,27 +11,26 @@ export = class NextCommand extends BaseCommand {
             description: "Shifts the queue",
             aliases: ["n"],
             enabled: true,
-            devOnly: true
+            permLevel: PermLevels.MOD
         });
     }
 
-    async run(client: Gdreqbot, msg: MsgData): Promise<any> {
-        let { channel } = msg;
+    async run(client: Gdreqbot, msg: ChatMessage, channel: string): Promise<any> {
         let res = await client.req.next(client);
 
         switch (res.status) {
             case ResCode.EMPTY: {
-                client.say(channel, "Kappa The queue is empty.", { replyTo: msg.msg });
+                client.say(channel, "Kappa The queue is empty.", { replyTo: msg });
                 break;
             }
 
             case ResCode.ERROR: {
-                client.say(channel, "An error occurred.", { replyTo: msg.msg });
+                client.say(channel, "An error occurred.", { replyTo: msg });
                 break;
             }
 
             case ResCode.OK: {
-                client.say(msg.channel, `PogChamp Next level: '${res.level.name}' (${res.level.id}) by ${res.level.creator}`, { replyTo: msg.msg });
+                client.say(channel, `PogChamp Next level: '${res.level.name}' (${res.level.id}) by ${res.level.creator}`, { replyTo: msg });
                 break;
             }
         }

@@ -1,28 +1,25 @@
 import { RefreshingAuthProvider } from "@twurple/auth";
 import { ChatClient, ChatClientOptions } from "@twurple/chat";
-import fs from "fs";
+import fs, { unlink } from "fs";
 import MapDB from "@galaxy05/map.db";
-import { config } from "dotenv";
-config({ quiet: true });
+import dotenv from "dotenv";
+dotenv.config({ quiet: true });
 
 import BaseCommand from "./structs/BaseCommand";
 import CommandLoader from "./modules/CommandLoader";
 import Logger from "./modules/Logger";
 import Request, { ResCode } from "./modules/Request";
+import config from "./config";
+import PermLevels from "./structs/PermLevels";
 
-const usrId = "1391218436";
-const prefix = process.env.PREFIX;
-const clientId = process.env.CLIENT_ID as string;
-const clientSecret = process.env.SECRET as string;
-
-const tokenData = JSON.parse(fs.readFileSync(`./tokens.${usrId}.json`, "utf-8"));
+const tokenData = JSON.parse(fs.readFileSync(`./tokens.${config.botId}.json`, "utf-8"));
 const authProvider = new RefreshingAuthProvider({
-    clientId,
-    clientSecret
+    clientId: config.clientId,
+    clientSecret: config.clientSecret
 });
 
-authProvider.addUser(usrId, tokenData);
-authProvider.addIntentsToUser(usrId, ["chat"]);
+authProvider.addUser(config.botId, tokenData);
+authProvider.addIntentsToUser(config.botId, ["chat"]);
 
 authProvider.onRefresh((userId, newTokenData) => {
     fs.writeFileSync(`./tokens.${userId}.json`, JSON.stringify(newTokenData, null, 4), "utf-8");
@@ -35,6 +32,7 @@ class Gdreqbot extends ChatClient {
     logger: Logger;
     db: MapDB;
     req: Request;
+    config: typeof config;
 
     constructor(options: ChatClientOptions) {
         super(options);
@@ -44,12 +42,13 @@ class Gdreqbot extends ChatClient {
         this.logger = new Logger();
         this.db = new MapDB("data.db");
         this.req = new Request(this.db);
+        this.config = config;
     }
 }
 
 const client = new Gdreqbot({
     authProvider,
-    channels: ["galaxyvinci05"],
+    channels: ["galaxyvinci05"]
 });
 
 const cmdFiles = fs.readdirSync("./dist/commands/").filter(f => f.endsWith(".js"));
@@ -63,11 +62,27 @@ for (const file of cmdFiles) {
 
 client.connect();
 
-client.onConnect(() => {
+client.onConnect(async () => {
+    try {
+        const { channel, timestamp } = require("../reboot.json");
+        await client.say(channel, `Rebooted in ${((Date.now() - timestamp) / 1000).toFixed(1)} seconds.`);
+
+        unlink("./reboot.json", () => {});
+    } catch {}
+
     client.logger.log("Ready");
 });
 
 client.onMessage(async (channel, user, text, msg) => {
+    let userPerms: PermLevels;
+
+    if (msg.userInfo.userId == config.ownerId) userPerms = PermLevels.DEV;
+    else if (msg.userInfo.isBroadcaster) userPerms = PermLevels.STREAMER;
+    else if (msg.userInfo.isMod) userPerms = PermLevels.MOD;
+    else if (msg.userInfo.isVip) userPerms = PermLevels.VIP;
+    else if (msg.userInfo.isSubscriber) userPerms = PermLevels.SUB;
+    else userPerms = PermLevels.USER;
+
     let isId = text.match(/\b\d{5,9}\b/);
 
     if (isId) {
@@ -106,17 +121,17 @@ client.onMessage(async (channel, user, text, msg) => {
         }
     }
 
-    if (!text.startsWith(prefix) || isId) return;
+    if (!text.startsWith(config.prefix) || isId) return;
 
-    let args = text.slice(prefix.length).trim().split(/ +/);
+    let args = text.slice(config.prefix.length).trim().split(/ +/);
     let cmdName = args.shift().toLowerCase();
     let cmd = client.commands.get(cmdName)
         || client.commands.values().find(c => c.config.aliases?.includes(cmdName));
 
-    if (!cmd || !cmd.config.enabled || (cmd.config.devOnly && user != "galaxyvinci05")) return;
+    if (!cmd || !cmd.config.enabled || cmd.config.permLevel > userPerms) return;
 
     try {
-        await cmd.run(client, { channel, user, text, msg }, args);
+        await cmd.run(client, msg, channel, args, userPerms);
     } catch (e) {
         client.say(channel, `An error occurred running command: ${cmd.config.name}`, { replyTo: msg });
         console.error(e);

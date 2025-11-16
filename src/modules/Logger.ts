@@ -69,11 +69,11 @@ class Logger {
     }
 
     /**
-     * @description Logs a bot restart
+     * @description Logs a bot reboot
      */
-    restart = () => {
+    reboot = () => {
         const timestamp = `[${moment(Date.now()).format("DD/MM/YYYY HH:mm:ss")}]:`;
-        console.log(`${timestamp} ${color.magentaBright("[RESTART]")} Restarting the bot...`);
+        console.log(`${timestamp} ${color.magentaBright("[REBOOT]")} Rebooting...`);
     }
 }
 

@@ -1,6 +1,8 @@
 import Gdreqbot from "../core";
-import BaseCommand, { MsgData } from "../structs/BaseCommand";
-import { ResCode, Settings } from "../modules/Request";
+import BaseCommand from "../structs/BaseCommand";
+import { ResCode } from "../modules/Request";
+import { ChatMessage } from "@twurple/chat";
+import PermLevels from "../structs/PermLevels";
 
 export = class ClearCommand extends BaseCommand {
     constructor() {
@@ -9,22 +11,21 @@ export = class ClearCommand extends BaseCommand {
             description: "Clear the queue",
             aliases: ["purge"],
             enabled: true,
-            devOnly: true
+            permLevel: PermLevels.MOD
         });
     }
 
-    async run(client: Gdreqbot, msg: MsgData, args: string[]): Promise<any> {
-        let { channel } = msg;
+    async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[]): Promise<any> {
         let res = await client.req.clear(client);
 
         switch (res.status) {
             case ResCode.EMPTY: {
-                client.say(channel, "Kappa The queue is empty.", { replyTo: msg.msg });
+                client.say(channel, "Kappa The queue is empty.", { replyTo: msg });
                 break;
             }
 
             case ResCode.OK: {
-                client.say(channel, `PogChamp Queue cleared.`, { replyTo: msg.msg });
+                client.say(channel, `PogChamp Queue cleared.`, { replyTo: msg });
                 break;
             }
         }

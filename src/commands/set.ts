@@ -1,6 +1,8 @@
 import Gdreqbot from "../core";
-import BaseCommand, { MsgData } from "../structs/BaseCommand";
+import BaseCommand from "../structs/BaseCommand";
 import { ResCode, Settings } from "../modules/Request";
+import { ChatMessage } from "@twurple/chat";
+import PermLevels from "../structs/PermLevels";
 
 export = class SetCommand extends BaseCommand {
     constructor() {
@@ -10,12 +12,11 @@ export = class SetCommand extends BaseCommand {
             args: "[<setting> <value>]",
             aliases: ["s", "settings"],
             enabled: true,
-            devOnly: true
+            permLevel: PermLevels.MOD
         });
     }
 
-    async run(client: Gdreqbot, msg: MsgData, args: string[]): Promise<any> {
-        let { channel } = msg;
+    async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[]): Promise<any> {
         let sets: Settings = client.db.get("settings");
 
         if (!args?.length)
@@ -25,17 +26,17 @@ export = class SetCommand extends BaseCommand {
 
         switch (res.status) {
             case ResCode.INVALID_KEY: {
-                client.say(channel, "Error: invalid key", { replyTo: msg.msg });
+                client.say(channel, "Error: invalid key", { replyTo: msg });
                 break;
             }
 
             case ResCode.INVALID_VALUE: {
-                client.say(channel, "Error: invalid value", { replyTo: msg.msg });
+                client.say(channel, "Error: invalid value", { replyTo: msg });
                 break;
             }
 
             case ResCode.OK: {
-                client.say(channel, `Set '${args[0]}' to '${args[1]}'`, { replyTo: msg.msg });
+                client.say(channel, `Set '${args[0]}' to '${args[1]}'`, { replyTo: msg });
                 break;
             }
         }

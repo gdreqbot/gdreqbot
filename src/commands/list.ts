@@ -1,6 +1,7 @@
+import { ChatMessage } from "@twurple/chat";
 import Gdreqbot from "../core";
 import { LevelData, ResCode } from "../modules/Request";
-import BaseCommand, { MsgData } from "../structs/BaseCommand";
+import BaseCommand from "../structs/BaseCommand";
 
 export = class ListCommand extends BaseCommand {
     constructor() {
@@ -13,28 +14,27 @@ export = class ListCommand extends BaseCommand {
         });
     }
 
-    async run(client: Gdreqbot, msg: MsgData, args: string[]): Promise<any> {
-        let { channel } = msg;
+    async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[]): Promise<any> {
         let levels: LevelData[] = client.db.get("levels");
         let page = parseInt(args[0]);
         if (args[0] && isNaN(page))
-            return client.say(channel, "Kappa Sir that's not a number.", { replyTo: msg.msg });
+            return client.say(channel, "Kappa Sir that's not a number.", { replyTo: msg });
 
         let res = client.req.list(client, page);
 
         switch (res.status) {
             case ResCode.EMPTY: {
-                client.say(channel, "Kappa The queue is empty.", { replyTo: msg.msg });
+                client.say(channel, "Kappa The queue is empty.", { replyTo: msg });
                 break;
             }
 
             case ResCode.END: {
-                client.say(channel, "Kappa There aren't that many pages.", { replyTo: msg.msg });
+                client.say(channel, "Kappa There aren't that many pages.", { replyTo: msg });
                 break;
             }
 
             case ResCode.OK: {
-                client.say(channel, `Page ${page || "1"} of ${res.pages} (${levels.length} levels) | ${res.page.map(l => `${l.pos}. ${l.name} (${l.id})`).join(" - ")}`, { replyTo: msg.msg });
+                client.say(channel, `Page ${page || "1"} of ${res.pages} (${levels.length} levels) | ${res.page.map(l => `${l.pos}. ${l.name} (${l.id})`).join(" - ")}`, { replyTo: msg });
                 break;
             }
         }

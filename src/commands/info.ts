@@ -1,6 +1,7 @@
 import Gdreqbot from "../core";
-import BaseCommand, { MsgData } from "../structs/BaseCommand";
+import BaseCommand from "../structs/BaseCommand";
 import { ResCode } from "../modules/Request";
+import { ChatMessage } from "@twurple/chat";
 
 export = class InfoCommand extends BaseCommand {
     constructor() {
@@ -13,24 +14,22 @@ export = class InfoCommand extends BaseCommand {
         });
     }
 
-    async run(client: Gdreqbot, msg: MsgData, args: string[]): Promise<any> {
-        let { channel } = msg;
-
+    async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[]): Promise<any> {
         let res = client.req.getLevel(client, args.join(" "));
 
         switch (res.status) {
             case ResCode.EMPTY: {
-                client.say(channel, "Kappa The queue is empty.", { replyTo: msg.msg });
+                client.say(channel, "Kappa The queue is empty.", { replyTo: msg });
                 break;
             }
 
             case ResCode.NOT_FOUND: {
-                client.say(channel, "Kappa Couldn't find that level.", { replyTo: msg.msg });
+                client.say(channel, "Kappa Couldn't find that level.", { replyTo: msg });
                 break;
             }
 
             case ResCode.OK: {
-                client.say(channel, `${args[0] ? "Level Info" : "Now Playing"} | Level: '${res.level.name}' | Creator: ${res.level.creator} | ID: ${res.level.id} | Requested by: ${res.level.user}`, { replyTo: msg.msg });
+                client.say(channel, `${args[0] ? "Level Info" : "Now Playing"} | Level: '${res.level.name}' | Creator: ${res.level.creator} | ID: ${res.level.id} | Requested by: ${res.level.user}`, { replyTo: msg });
                 break;
             }
         }

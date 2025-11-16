@@ -1,28 +1,47 @@
+import { ChatMessage } from "@twurple/chat";
 import Gdreqbot from "../core";
-import { LevelData, ResCode } from "../modules/Request";
-import BaseCommand, { MsgData } from "../structs/BaseCommand";
+import BaseCommand from "../structs/BaseCommand";
+import PermLevels from "../structs/PermLevels";
 
 export = class HelpCommand extends BaseCommand {
     constructor() {
         super({
             name: "help",
             description: "Lists commands",
+            privilegeDesc: "Lists commands that support privilege mode",
             args: "[<command>]",
+            privilegeArgs: "[<command>]",
             aliases: ["h", "?", "commands", "cmd"],
-            enabled: true
+            enabled: true,
+            supportsPrivilege: true
         });
     }
 
-    async run(client: Gdreqbot, msg: MsgData, args: string[]): Promise<any> {
-        let { channel } = msg;
+    async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[], userPerms: PermLevels, privilegeMode: boolean): Promise<any> {
         let cmd = client.commands.get(args[0])
             || client.commands.values().find(c => c.config.aliases.includes(args[0]));
 
         if (args[0] && !cmd)
-            return client.say(channel, "Kappa That command doesn't exist.", { replyTo: msg.msg });
-        else if (cmd)
-            return client.say(channel, `${process.env.PREFIX}${cmd.config.name}: ${cmd.config.description} | args: ${cmd.config.args ? `${process.env.PREFIX}${cmd.config.name} ${cmd.config.args}` : "none"} | aliases: ${cmd.config.aliases?.join(", ") || "none"}`, { replyTo: msg.msg });
-        else
-            client.say(channel, `${process.env.PREFIX}help <command> for more info | ${client.commands.values().filter(c => !c.config.devOnly).map(c => `${process.env.PREFIX}${c.config.name}`).toArray().join(" - ")}`, { replyTo: msg.msg });
+            return client.say(channel, "Kappa That command doesn't exist.", { replyTo: msg });
+
+        let str;
+        if (privilegeMode) {
+            if (cmd) {
+                if (!cmd.config.supportsPrivilege)
+                    return client.say(channel, "That command doesn't support privilege mode.", { replyTo: msg });
+
+                str = `${client.config.prefix}pr ${cmd.config.name}: ${cmd.config.privilegeDesc} | args: ${cmd.config.privilegeArgs ? `${client.config.prefix}pr ${cmd.config.name} ${cmd.config.privilegeArgs}` : "none"}`;
+            } else {
+                str = `${client.config.prefix}pr help <command> for more info | ${client.commands.values().filter(c => c.config.supportsPrivilege).map(c => `${client.config.prefix}pr ${c.config.name}`).toArray().join(" - ")}`
+            }
+        } else {
+            if (cmd) {
+                str = `${client.config.prefix}${cmd.config.name}: ${cmd.config.description} | args: ${cmd.config.args ? `${client.config.prefix}${cmd.config.name} ${cmd.config.args}` : "none"} | aliases: ${cmd.config.aliases?.join(", ") || "none"} | required perm: ${PermLevels[cmd.config.permLevel]}`;
+            } else {
+                str = `${client.config.prefix}help <command> for more info | ${client.commands.values().filter(c => c.config.permLevel <= userPerms).map(c => `${client.config.prefix}${c.config.name}`).toArray().join(" - ")}`;
+            }
+        }
+
+        await client.say(channel, str, { replyTo: msg });
     }
 }
