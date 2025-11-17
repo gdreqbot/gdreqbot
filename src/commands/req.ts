@@ -1,7 +1,8 @@
 import Gdreqbot from "../core";
 import BaseCommand from "../structs/BaseCommand";
-import { ResCode, Settings } from "../modules/Request";
+import { ResCode } from "../modules/Request";
 import { ChatMessage } from "@twurple/chat";
+import { Settings } from "../datasets/settings";
 
 export = class ReqCommand extends BaseCommand {
     constructor() {
@@ -18,8 +19,8 @@ export = class ReqCommand extends BaseCommand {
         if (!args.length)
             return client.say(channel, "Kappa You need to specify a query.", { replyTo: msg });
 
-        let res = await client.req.addLevel(client, args.join(" "), msg.userInfo.userName);
-        let sets: Settings = client.db.get("settings");
+        let res = await client.req.addLevel(client, msg.channelId, { userId: msg.userInfo.userId, userName: msg.userInfo.userName }, args.join(" "));
+        let sets: Settings = client.db.load("settings", { channelId: msg.channelId });
 
         switch (res.status) {
             case ResCode.NOT_FOUND: {
@@ -53,7 +54,7 @@ export = class ReqCommand extends BaseCommand {
             }
 
             case ResCode.OK: {
-                client.say(channel, `PogChamp Added '${res.level.name}' (${res.level.id}) by ${res.level.creator} to the queue at position ${client.db.get("levels").length}`, { replyTo: msg });
+                client.say(channel, `PogChamp Added '${res.level.name}' (${res.level.id}) by ${res.level.creator} to the queue at position ${client.db.load("levels", { channelId: msg.channelId }).levels.length}`, { replyTo: msg });
                 break;
             }
         }

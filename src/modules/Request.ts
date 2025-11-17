@@ -1,34 +1,11 @@
-import MapDB from "@galaxy05/map.db";
 import Gdreqbot from "../core";
 import superagent from "superagent";
-import Database from "./Database";
+import { LevelData } from "../datasets/levels";
+import { User } from "../structs/user";
+import { Settings } from "../datasets/settings";
 
 class Request {
-    //query: string;
-    //type?: "id" | "name";
-
-    //constructor(query: string, type: "id" | "name" = "id") {
-    //    this.query = query;
-    //    this.type = type;
-    //}
-
-    constructor(db: Database) {
-        let levels: LevelData[] = db.get("levels");
-        if (!levels?.length) {
-            db.set("levels", []);
-        }
-
-        let sets: Settings = db.get("settings");
-        if (!sets) {
-            db.set("settings", {
-                req_enabled: true,
-                max_per_user: 2,
-                max_queue: -1
-            } as Settings);
-        }
-    }
-
-    private parseLevel(raw: string, user: string): LevelData {
+    private parseLevel(raw: string, user: User): LevelData {
         return {
             name: raw.split(":")[3],
             creator: raw.split("#")[1].split(":")[1],
@@ -37,8 +14,8 @@ class Request {
         };
     }
 
-    async addLevel(client: Gdreqbot, query: string, user: string) {
-        let sets: Settings = client.db.get("settings");
+    async addLevel(client: Gdreqbot, channelId: string, user: User, query: any) {
+        let sets: Settings = client.db.load("settings", { channelId });
         if (!sets.req_enabled) return { status: ResCode.DISABLED };
 
         try {
@@ -51,11 +28,11 @@ class Request {
                     "type": 0,
                     "secret": "Wmfd2893gb7",
                 });
-            console.log(res.text);
+            // console.log(res.text);
             if (res.text == "-1") return { status: ResCode.NOT_FOUND };
 
             let newLvl = this.parseLevel(res.text, user);
-            let levels: LevelData[] = client.db.get("levels");
+            let levels: LevelData[] = client.db.load("levels", { channelId }).levels;
 
             if (levels.find(l => l.id == newLvl.id))
                 return { status: ResCode.ALREADY_ADDED };
@@ -65,7 +42,7 @@ class Request {
                 return { status: ResCode.FULL };
 
             levels.push(newLvl);
-            await client.db.set("levels", levels);
+            await client.db.save("levels", { channelId }, { levels });
 
             return { status: ResCode.OK, level: newLvl };
         } catch (e) {
@@ -74,8 +51,8 @@ class Request {
         }
     }
 
-    async removeLevel(client: Gdreqbot, query: string) {
-        let levels: LevelData[] = client.db.get("levels");
+    async removeLevel(client: Gdreqbot, channelId: string, query: string) {
+        let levels: LevelData[] = client.db.load("levels", { channelId }).levels;
         if (!levels.length)
             return { status: ResCode.EMPTY };
 
@@ -86,7 +63,7 @@ class Request {
         let level = levels.splice(pos, 1);
 
         try {
-            await client.db.set("levels", levels);
+            await client.db.save("levels", { channelId }, { levels });
         } catch (e) {
             console.error(e);
             return { status: ResCode.ERROR };
@@ -95,8 +72,8 @@ class Request {
         return { status: ResCode.OK, level };
     }
 
-    getLevel(client: Gdreqbot, query?: string) {
-        let levels: LevelData[] = client.db.get("levels");
+    getLevel(client: Gdreqbot, channelId: string, query?: string) {
+        let levels: LevelData[] = client.db.load("levels", { channelId }).levels;
         if (!levels.length)
             return { status: ResCode.EMPTY };
 
@@ -115,37 +92,37 @@ class Request {
         return { status: ResCode.OK, level, lvlPos: pos+1 };
     }
 
-    async clear(client: Gdreqbot) {
-        let levels: LevelData[] = client.db.get("levels");
+    async clear(client: Gdreqbot, channelId: string) {
+        let levels: LevelData[] = client.db.load("levels", { channelId }).levels;
         if (!levels.length)
             return { status: ResCode.EMPTY };
-        
-        await client.db.set("levels", []);
+
+        await client.db.save("levels", { channelId }, { levels: [] });
         return { status: ResCode.OK };
     }
 
-    async next(client: Gdreqbot) {
-        let levels: LevelData[] = client.db.get("levels");
+    async next(client: Gdreqbot, channelId: string) {
+        let levels: LevelData[] = client.db.load("levels", { channelId }).levels;
         if (!levels.length)
             return { status: ResCode.EMPTY };
 
         try {
             levels.shift();
-            await client.db.set("levels", levels);
+            await client.db.save("levels", { channelId }, { levels });
         } catch (e) {
             console.error(e);
             return { status: ResCode.ERROR };
         }
 
-        let level: LevelData = client.db.get("levels")[0];
+        let level: LevelData = client.db.load("levels", { channelId }).levels[0];
         if (!level)
             return { status: ResCode.EMPTY };
 
         return { status: ResCode.OK, level };
     }
 
-    list(client: Gdreqbot, page?: number) {
-        let levels: LevelData[] = client.db.get("levels");
+    list(client: Gdreqbot, channelId: string, page?: number) {
+        let levels: LevelData[] = client.db.load("levels", { channelId }).levels;
         if (!levels.length)
             return { status: ResCode.EMPTY };
 
@@ -183,16 +160,15 @@ class Request {
         return { status: ResCode.OK, page: pages[page ? page-1 : 0], pages: pages.length };
     }
 
-    async toggle(client: Gdreqbot) {
-        let sets: Settings = client.db.get("settings");
-        sets.req_enabled = !sets.req_enabled;
-        await client.db.set("settings", sets);
+    async toggle(client: Gdreqbot, channelId: string) {
+        let sets: Settings = client.db.load("settings", { channelId });
+        await client.db.save("settings", { channelId }, { req_enabled: !sets.req_enabled });
 
-        return sets.req_enabled;
+        return !sets.req_enabled;
     }
 
-    async set(client: Gdreqbot, key: string, value: string) {
-        let sets: Settings = client.db.get("settings");
+    async set(client: Gdreqbot, channelId: string, key: string, value: string) {
+        let sets: Settings = client.db.load("settings", { channelId });
         
         // ugly as hell ik
         switch (key) {
@@ -201,8 +177,7 @@ class Request {
                     return { status: ResCode.INVALID_VALUE };
 
                 sets.req_enabled = (value == "true" ? true : false);
-                await client.db.set("settings", sets);
-                return { status: ResCode.OK };
+                break;
             }
 
             case "max_per_user": {
@@ -210,8 +185,7 @@ class Request {
                     return { status: ResCode.INVALID_VALUE };
 
                 sets.max_per_user = parseInt(value);
-                await client.db.set("settings", sets);
-                return { status: ResCode.OK };
+                break;
             }
 
             case "max_queue": {
@@ -219,13 +193,15 @@ class Request {
                     return { status: ResCode.INVALID_VALUE };
 
                 sets.max_queue = parseInt(value);
-                await client.db.set("settings", sets);
-                return { status: ResCode.OK };
+                break;
             }
 
             default:
                 return { status: ResCode.INVALID_KEY };
         }
+
+        await client.db.save("settings", { channelId }, sets);
+        return { status: ResCode.OK };
     }
 }
 

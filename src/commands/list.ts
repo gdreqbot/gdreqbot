@@ -1,7 +1,8 @@
 import { ChatMessage } from "@twurple/chat";
 import Gdreqbot from "../core";
-import { LevelData, ResCode } from "../modules/Request";
+import { ResCode } from "../modules/Request";
 import BaseCommand from "../structs/BaseCommand";
+import { LevelData } from "../datasets/levels";
 
 export = class ListCommand extends BaseCommand {
     constructor() {
@@ -15,12 +16,12 @@ export = class ListCommand extends BaseCommand {
     }
 
     async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[]): Promise<any> {
-        let levels: LevelData[] = client.db.get("levels");
+        let levels: LevelData[] = client.db.load("levels", { channelId: msg.channelId }).levels;
         let page = parseInt(args[0]);
         if (args[0] && isNaN(page))
             return client.say(channel, "Kappa Sir that's not a number.", { replyTo: msg });
 
-        let res = client.req.list(client, page);
+        let res = client.req.list(client, msg.channelId, page);
 
         switch (res.status) {
             case ResCode.EMPTY: {

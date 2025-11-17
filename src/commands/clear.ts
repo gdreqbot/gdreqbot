@@ -15,8 +15,8 @@ export = class ClearCommand extends BaseCommand {
         });
     }
 
-    async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[]): Promise<any> {
-        let res = await client.req.clear(client);
+    async run(client: Gdreqbot, msg: ChatMessage, channel: string): Promise<any> {
+        let res = await client.req.clear(client, msg.channelId);
 
         switch (res.status) {
             case ResCode.EMPTY: {

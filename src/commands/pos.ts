@@ -1,7 +1,8 @@
 import Gdreqbot from "../core";
 import BaseCommand from "../structs/BaseCommand";
-import { LevelData, ResCode } from "../modules/Request";
+import { ResCode } from "../modules/Request";
 import { ChatMessage } from "@twurple/chat";
+import { LevelData } from "../datasets/levels";
 
 export = class PosCommand extends BaseCommand {
     constructor() {
@@ -15,12 +16,12 @@ export = class PosCommand extends BaseCommand {
     }
 
     async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[]): Promise<any> {
-        let levels: LevelData[] = client.db.get("levels");
+        let levels: LevelData[] = client.db.load("levels", { channelId: msg.channelId }).levels;
         let query = "";
         if (args[0]) {
             query = args.join(" ");
         } else {
-            let usrLvls = levels.filter(l => l.user == msg.userInfo.userName);
+            let usrLvls = levels.filter(l => l.user.userName == msg.userInfo.userName); // todo: change to userId
             if (!usrLvls?.length)
                 return client.say(channel, "Kappa You don't have any levels in the queue.", { replyTo: msg });
 

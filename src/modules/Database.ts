@@ -1,53 +1,88 @@
 import MapDB from "@galaxy05/map.db";
+import { readdirSync } from "fs";
 
 class Database {
     private db: MapDB;
-    private filename: string;
 
     constructor(filename: string) {
-        this.filename = filename;
+        this.db = new MapDB(filename);
     }
 
-    init() {
-        this.db = new MapDB(this.filename);
+    async init() {
+        let datasets = readdirSync("./datasets/").filter(f => f.endsWith(".js"));
+        for (const dataset of datasets) {
+            if (!this.db.get(dataset))
+                await this.db.set(dataset, []);
+        }
     }
 
-    load(path: string, query?: any, multiple?: boolean) {
+    async setDefault(query: any) {
+        let datasets = readdirSync("./datasets/").filter(f => f.endsWith(".js"));
+        for (const dataset of datasets) {
+            let entry = this.objQuery(this.db.get(dataset), query);
+
+            if (!entry.data?.length)
+                await this.save(dataset, query);
+        }
+    }
+
+    load(path: string, query: any, multiple?: boolean): any|null {
         let data = this.db.get(path);
-        if (query) data = multiple ? data.filter(query) : data.find(query);
+        let entry = this.objQuery(data, query);
 
-        return data;
+        if (entry.data?.length)
+            return multiple ? entry.data : entry.data[0];
+        else
+            return null;
     }
 
-    async save(path: string, query: any, newData?: any): Promise<any|null> {
+    async save(path: string, query: any, newData?: any) {
+        const { defaultValues } = require(`../datasets/${path}.js`);
         let data = this.db.get(path);
-        let idx = data.findIndex(query);
+        let entry = this.objQuery(data, query);
 
-        if (idx == -1) return null;
-
-        if (newData) {
-            data[idx] = newData;
-            await this.db.set(path, newData);
+        if (entry.data?.length) {
+            data[entry.idx[0]] = Object.assign(entry.data[0], newData);
+            await this.db.set(path, data);
+        } else {
+            entry = Object.assign(defaultValues, query, newData);
+            data.push(entry);
+            await this.db.set(path, data);
         }
 
-        return this.db.get(path);
+        return entry.data[0];
     }
 
     async delete(path: string, query: any) {
         let data = this.db.get(path);
-        let idx;
-        let deleted = [];
+        let entries = this.objQuery(data, query);
 
-        do {
-            idx = data.findIndex(query);
-            if (idx != -1) {
-                deleted.push(data[idx]);
-                data.splice(idx, 1);
+        for (let i = 0; i < entries.data.length; i++) {
+            data.splice(entries.idx[i], 1);
+        }
+
+        if (entries.data.length) await this.db.set(path, data);
+        return entries.data;
+    }
+
+    private objQuery(data: any, query: any) {
+        // imma fuckin genius
+        let idx: number[] = [];
+        let cb = (x: any, i: number) => {
+            let obj: any = Object.entries(query); // [['id', '12345'], ['name', 'shish']]
+            let match = true;
+            for (let [key, value] of obj) {
+                if (x[key] !== value) {
+                    match = false;
+                    break;
+                }
             }
-        } while (idx != -1);
+            
+            if (match) idx.push(i);
+            return match;
+        };
 
-        if (deleted.length) await this.db.set(path, data);
-        return deleted;
+        return { data: data.filter(cb), idx };
     }
 }
 

@@ -11,6 +11,8 @@ import Database from "./modules/Database";
 import Request, { ResCode } from "./modules/Request";
 import config from "./config";
 import PermLevels from "./structs/PermLevels";
+import { Blacklist } from "./datasets/blacklist";
+import { Levels } from "./datasets/levels";
 
 const tokenData = JSON.parse(fs.readFileSync(`./tokens.${config.botId}.json`, "utf-8"));
 const authProvider = new RefreshingAuthProvider({
@@ -41,7 +43,7 @@ class Gdreqbot extends ChatClient {
         this.cmdLoader = new CommandLoader();
         this.logger = new Logger();
         this.db = new Database("data.db");
-        this.req = new Request(this.db);
+        this.req = new Request();
         this.config = config;
     }
 }
@@ -63,6 +65,8 @@ for (const file of cmdFiles) {
 client.connect();
 
 client.onConnect(async () => {
+    await client.db.init();
+
     try {
         const { channel, timestamp } = require("../reboot.json");
         await client.say(channel, `Rebooted in ${((Date.now() - timestamp) / 1000).toFixed(1)} seconds.`);
@@ -74,20 +78,24 @@ client.onConnect(async () => {
 });
 
 client.onMessage(async (channel, user, text, msg) => {
+    await client.db.setDefault({ channelId: msg.channelId, channelName: channel });
+
     let userPerms: PermLevels;
+    let blacklist: Blacklist = client.db.load("blacklist", { channelId: msg.channelId });
+    let levels: Levels = client.db.load("levels", { channelId: msg.channelId });
 
     if (msg.userInfo.userId == config.ownerId) userPerms = PermLevels.DEV;
     else if (msg.userInfo.isBroadcaster) userPerms = PermLevels.STREAMER;
     else if (msg.userInfo.isMod) userPerms = PermLevels.MOD;
     else if (msg.userInfo.isVip) userPerms = PermLevels.VIP;
     else if (msg.userInfo.isSubscriber) userPerms = PermLevels.SUB;
-    else if (!client.blacklist.includes(msg.userInfo.userId)) userPerms = PermLevels.USER;
+    else if (!blacklist.users.find(u => u.userId == msg.userInfo.userId)) userPerms = PermLevels.USER;
     else userPerms = PermLevels.BLACKLISTED;
 
     let isId = text.match(/\b\d{5,9}\b/);
 
     if (isId) {
-        let res = await client.req.addLevel(client, isId[0], user);
+        let res = await client.req.addLevel(client, msg.channelId, { userId: msg.userInfo.userId, userName: msg.userInfo.userName }, isId[0]);
             
         switch (res.status) {
             case ResCode.NOT_FOUND: {
@@ -116,7 +124,7 @@ client.onMessage(async (channel, user, text, msg) => {
             }
 
             case ResCode.OK: {
-                client.say(channel, `PogChamp Added '${res.level.name}' (${res.level.id}) by ${res.level.creator} to the queue at position ${client.db.get("levels").length}`, { replyTo: msg });
+                client.say(channel, `PogChamp Added '${res.level.name}' (${res.level.id}) by ${res.level.creator} to the queue at position ${levels.levels.length}`, { replyTo: msg });
                 break;
             }
         }

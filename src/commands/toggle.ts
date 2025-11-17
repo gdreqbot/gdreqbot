@@ -15,7 +15,7 @@ export = class ToggleCommand extends BaseCommand {
     }
 
     async run(client: Gdreqbot, msg: ChatMessage, channel: string): Promise<any> {
-        let toggle = await client.req.toggle(client);
+        let toggle = await client.req.toggle(client, msg.channelId);
         client.say(channel, `Requests are now ${toggle ? "enabled" : "disabled"}.`, { replyTo: msg });
     }
 }

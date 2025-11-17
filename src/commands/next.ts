@@ -16,7 +16,7 @@ export = class NextCommand extends BaseCommand {
     }
 
     async run(client: Gdreqbot, msg: ChatMessage, channel: string): Promise<any> {
-        let res = await client.req.next(client);
+        let res = await client.req.next(client, msg.channelId);
 
         switch (res.status) {
             case ResCode.EMPTY: {

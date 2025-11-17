@@ -1,8 +1,9 @@
 import Gdreqbot from "../core";
 import BaseCommand from "../structs/BaseCommand";
-import { ResCode, Settings } from "../modules/Request";
+import { ResCode } from "../modules/Request";
 import { ChatMessage } from "@twurple/chat";
 import PermLevels from "../structs/PermLevels";
+import { Settings } from "../datasets/settings";
 
 export = class SetCommand extends BaseCommand {
     constructor() {
@@ -17,12 +18,12 @@ export = class SetCommand extends BaseCommand {
     }
 
     async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[]): Promise<any> {
-        let sets: Settings = client.db.get("settings");
+        let sets: Settings = client.db.load("settings", { channelId: msg.channelId });
 
         if (!args?.length)
             return client.say(channel, `Settings: ${Object.entries(sets).map(s => `${s[0]}:${s[1]}`).join(" - ")}`);
 
-        let res = await client.req.set(client, args[0], args[1]);
+        let res = await client.req.set(client, msg.channelId, args[0], args[1]);
 
         switch (res.status) {
             case ResCode.INVALID_KEY: {
