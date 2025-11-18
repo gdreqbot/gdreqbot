@@ -13,6 +13,8 @@ import config from "./config";
 import PermLevels from "./structs/PermLevels";
 import { Blacklist } from "./datasets/blacklist";
 import { Levels } from "./datasets/levels";
+import { Perm } from "./datasets/perms";
+import { getUser } from "./apis/twitch";
 
 const tokenData = JSON.parse(fs.readFileSync(`./tokens.${config.botId}.json`, "utf-8"));
 const authProvider = new RefreshingAuthProvider({
@@ -137,7 +139,11 @@ client.onMessage(async (channel, user, text, msg) => {
     let cmd = client.commands.get(cmdName)
         || client.commands.values().find(c => c.config.aliases?.includes(cmdName));
 
-    if (!cmd || !cmd.config.enabled || cmd.config.permLevel > userPerms) return;
+    if (!cmd || !cmd.config.enabled) return;
+
+    let perms: Perm[] = client.db.load("perms", { channelId: msg.channelId }).perms;
+    let customPerm = perms?.find(p => p.cmd == cmd.config.name);
+    if ((customPerm?.perm || cmd.config.permLevel) > userPerms) return;
 
     try {
         await cmd.run(client, msg, channel, args, userPerms);

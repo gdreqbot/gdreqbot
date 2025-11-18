@@ -2,6 +2,7 @@ import { ChatMessage } from "@twurple/chat";
 import Gdreqbot from "../core";
 import BaseCommand from "../structs/BaseCommand";
 import PermLevels from "../structs/PermLevels";
+import { Perm } from "../datasets/perms";
 
 export = class HelpCommand extends BaseCommand {
     constructor() {
@@ -35,10 +36,14 @@ export = class HelpCommand extends BaseCommand {
                 str = `${client.config.prefix}pr help <command> for more info | ${client.commands.values().filter(c => c.config.supportsPrivilege).map(c => `${client.config.prefix}pr ${c.config.name}`).toArray().join(" - ")}`
             }
         } else {
+            let perms: Perm[] = client.db.load("perms", { channelId: msg.channelId }).perms;
+
             if (cmd) {
-                str = `${client.config.prefix}${cmd.config.name}: ${cmd.config.description} | args: ${cmd.config.args ? `${client.config.prefix}${cmd.config.name} ${cmd.config.args}` : "none"} | aliases: ${cmd.config.aliases?.join(", ") || "none"} | required perm: ${PermLevels[cmd.config.permLevel]}`;
+                let customPerm = perms?.find(p => p.cmd == cmd.config.name);
+
+                str = `${client.config.prefix}${cmd.config.name}: ${cmd.config.description} | args: ${cmd.config.args ? `${client.config.prefix}${cmd.config.name} ${cmd.config.args}` : "none"} | aliases: ${cmd.config.aliases?.join(", ") || "none"} | required perm: ${PermLevels[customPerm?.perm || cmd.config.permLevel]}`;
             } else {
-                str = `${client.config.prefix}help <command> for more info | ${client.commands.values().filter(c => c.config.permLevel <= userPerms).map(c => `${client.config.prefix}${c.config.name}`).toArray().join(" - ")}`;
+                str = `${client.config.prefix}help <command> for more info | ${client.commands.values().filter(c => (perms?.find(p => p.cmd == c.config.name)?.perm || c.config.permLevel) <= userPerms).map(c => `${client.config.prefix}${c.config.name}`).toArray().join(" - ")}`;
             }
         }
 

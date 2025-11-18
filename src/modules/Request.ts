@@ -3,6 +3,7 @@ import superagent from "superagent";
 import { LevelData } from "../datasets/levels";
 import { User } from "../structs/user";
 import { Settings } from "../datasets/settings";
+import * as gd from "../apis/gd";
 
 class Request {
     private parseLevel(raw: string, user: User): LevelData {
@@ -14,24 +15,17 @@ class Request {
         };
     }
 
-    async addLevel(client: Gdreqbot, channelId: string, user: User, query: any) {
+    async addLevel(client: Gdreqbot, channelId: string, user: User, query: string) {
         let sets: Settings = client.db.load("settings", { channelId });
         if (!sets.req_enabled) return { status: ResCode.DISABLED };
 
         try {
-            let res = await superagent
-                .post("http://www.boomlings.com/database/getGJLevels21.php")
-                .set("Content-Type", "application/x-www-form-urlencoded")
-                .set("User-Agent", "")
-                .send({
-                    "str": query,
-                    "type": 0,
-                    "secret": "Wmfd2893gb7",
-                });
-            // console.log(res.text);
-            if (res.text == "-1") return { status: ResCode.NOT_FOUND };
+            let raw = await gd.getLevel(query);
+            // console.log(raw);
+            if (!raw) return { status: ResCode.ERROR };
+            else if (raw == "-1") return { status: ResCode.NOT_FOUND };
 
-            let newLvl = this.parseLevel(res.text, user);
+            let newLvl = this.parseLevel(raw, user);
             let levels: LevelData[] = client.db.load("levels", { channelId }).levels;
 
             if (levels.find(l => l.id == newLvl.id))
@@ -164,7 +158,7 @@ class Request {
         let sets: Settings = client.db.load("settings", { channelId });
         await client.db.save("settings", { channelId }, { req_enabled: !sets.req_enabled });
 
-        return !sets.req_enabled;
+        return sets.req_enabled;
     }
 
     async set(client: Gdreqbot, channelId: string, key: string, value: string) {

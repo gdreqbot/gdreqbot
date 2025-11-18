@@ -10,7 +10,7 @@ export = class SetCommand extends BaseCommand {
         super({
             name: "set",
             description: "View or edit settings",
-            args: "[<setting> <value>]",
+            args: "[<setting> <value>] (for numeric options, -1 disables it)",
             aliases: ["s", "settings"],
             enabled: true,
             permLevel: PermLevels.MOD
@@ -21,7 +21,7 @@ export = class SetCommand extends BaseCommand {
         let sets: Settings = client.db.load("settings", { channelId: msg.channelId });
 
         if (!args?.length)
-            return client.say(channel, `Settings: ${Object.entries(sets).map(s => `${s[0]}:${s[1]}`).join(" - ")}`);
+            return client.say(channel, `Settings: ${Object.entries(sets).slice(2).map(s => `${s[0]}:${s[1]}`).join(" - ")}`);
 
         let res = await client.req.set(client, msg.channelId, args[0], args[1]);
 

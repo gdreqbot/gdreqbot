@@ -9,20 +9,23 @@ class Database {
     }
 
     async init() {
-        let datasets = readdirSync("./datasets/").filter(f => f.endsWith(".js"));
+        let datasets = readdirSync("./dist/datasets/").filter(f => f.endsWith(".js"));
         for (const dataset of datasets) {
-            if (!this.db.get(dataset))
-                await this.db.set(dataset, []);
+            let path = dataset.split(".")[0];
+
+            if (!this.db.get(path))
+                await this.db.set(path, []);
         }
     }
 
     async setDefault(query: any) {
-        let datasets = readdirSync("./datasets/").filter(f => f.endsWith(".js"));
+        let datasets = readdirSync("./dist/datasets/").filter(f => f.endsWith(".js"));
         for (const dataset of datasets) {
-            let entry = this.objQuery(this.db.get(dataset), query);
+            let path = dataset.split(".")[0];
+            let entry = this.objQuery(this.db.get(path), query);
 
             if (!entry.data?.length)
-                await this.save(dataset, query);
+                await this.save(path, query);
         }
     }
 
@@ -44,13 +47,15 @@ class Database {
         if (entry.data?.length) {
             data[entry.idx[0]] = Object.assign(entry.data[0], newData);
             await this.db.set(path, data);
+
+            return entry.data[0];
         } else {
             entry = Object.assign(defaultValues, query, newData);
             data.push(entry);
             await this.db.set(path, data);
-        }
 
-        return entry.data[0];
+            return entry;
+        }
     }
 
     async delete(path: string, query: any) {
@@ -66,6 +71,8 @@ class Database {
     }
 
     private objQuery(data: any, query: any) {
+        if (!data) return null;
+
         // imma fuckin genius
         let idx: number[] = [];
         let cb = (x: any, i: number) => {
