@@ -14,7 +14,6 @@ import PermLevels from "./structs/PermLevels";
 import { Blacklist } from "./datasets/blacklist";
 import { Levels } from "./datasets/levels";
 import { Perm } from "./datasets/perms";
-import { getUser } from "./apis/twitch";
 
 const tokenData = JSON.parse(fs.readFileSync(`./tokens.${config.botId}.json`, "utf-8"));
 const authProvider = new RefreshingAuthProvider({
@@ -96,7 +95,7 @@ client.onMessage(async (channel, user, text, msg) => {
 
     let isId = text.match(/\b\d{5,9}\b/);
 
-    if (isId) {
+    if (isId && userPerms != PermLevels.BLACKLISTED) {
         let res = await client.req.addLevel(client, msg.channelId, { userId: msg.userInfo.userId, userName: msg.userInfo.userName }, isId[0]);
             
         switch (res.status) {
