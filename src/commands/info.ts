@@ -15,7 +15,7 @@ export = class InfoCommand extends BaseCommand {
     }
 
     async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[]): Promise<any> {
-        let res = client.req.getLevel(client, args.join(" "));
+        let res = client.req.getLevel(client, msg.channelId, args.join(" "));
 
         switch (res.status) {
             case ResCode.EMPTY: {
@@ -29,7 +29,7 @@ export = class InfoCommand extends BaseCommand {
             }
 
             case ResCode.OK: {
-                client.say(channel, `${args[0] ? "Level Info" : "Now Playing"} | Level: '${res.level.name}' | Creator: ${res.level.creator} | ID: ${res.level.id} | Requested by: ${res.level.user}`, { replyTo: msg });
+                client.say(channel, `${args[0] ? "Level Info" : "Now Playing"} | Level: '${res.level.name}' | Creator: ${res.level.creator} | ID: ${res.level.id} | Requested by: ${res.level.user.userName}`, { replyTo: msg });
                 break;
             }
         }

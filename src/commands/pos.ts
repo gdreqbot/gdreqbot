@@ -28,7 +28,7 @@ export = class PosCommand extends BaseCommand {
             query = usrLvls[0].id;
         }
 
-        let res = client.req.getLevel(client, query);
+        let res = client.req.getLevel(client, msg.channelId, query);
 
         switch (res.status) {
             case ResCode.EMPTY: {
