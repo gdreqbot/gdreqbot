@@ -1,6 +1,7 @@
 import { RefreshingAuthProvider } from "@twurple/auth";
 import { ChatClient, ChatClientOptions } from "@twurple/chat";
 import fs, { unlink } from "fs";
+import { Server } from "http";
 import dotenv from "dotenv";
 dotenv.config({ quiet: true });
 
@@ -14,6 +15,7 @@ import PermLevels from "./structs/PermLevels";
 import { Blacklist } from "./datasets/blacklist";
 import { Levels } from "./datasets/levels";
 import { Perm } from "./datasets/perms";
+import Dashboard from "./server";
 
 const tokenData = JSON.parse(fs.readFileSync(`./tokens.${config.botId}.json`, "utf-8"));
 const authProvider = new RefreshingAuthProvider({
@@ -36,6 +38,7 @@ class Gdreqbot extends ChatClient {
     db: Database;
     req: Request;
     config: typeof config;
+    server: Server;
 
     constructor(options: ChatClientOptions) {
         super(options);
@@ -67,6 +70,7 @@ client.connect();
 
 client.onConnect(async () => {
     await client.db.init();
+    await new Dashboard().run(client);
 
     try {
         const { channel, timestamp } = require("../reboot.json");
