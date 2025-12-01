@@ -30,6 +30,7 @@ export = class PrivilegeCommand extends BaseCommand {
             return client.say(channel, "This command doesn't support privilege mode.", { replyTo: msg });
 
         try {
+            client.logger.log(`Running command: ${cmd.config.name} in channel: ${channel} in privilege mode`);
             await cmd.run(client, msg, channel, newArgs, userPerms, true);
         } catch (e) {
             client.say(channel, `An error occurred running command: ${cmd.config.name}. If the issue persists, please contact the developer.`, { replyTo: msg });

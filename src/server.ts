@@ -78,6 +78,7 @@ export = class {
                     await client.db.setDefault({ channelId, channelName });
 
                     await client.say(channelName, "Thanks for adding gdreqbot! You can get a list of commands by typing !help");
+                    client.logger.log(`→   New channel joined: ${channelName}`);
                 } else if (channel.userName != channelName) {
                     let idx = channels.findIndex(c => c.userId == channelId);
                     channels[idx].userName = channelName;

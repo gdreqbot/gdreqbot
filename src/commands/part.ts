@@ -24,5 +24,6 @@ export = class PartCommand extends BaseCommand {
 
         await channelsdb.set("channels", channels);
         client.part(channel);
+        client.logger.log(`←   Channel left: ${channel}`);
     }
 }

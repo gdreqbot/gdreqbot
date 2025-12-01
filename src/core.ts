@@ -159,6 +159,7 @@ client.onMessage(async (channel, user, text, msg) => {
     if ((customPerm?.perm || cmd.config.permLevel) > userPerms) return;
 
     try {
+        client.logger.log(`Running command: ${cmd.config.name} in channel: ${channel}`);
         await cmd.run(client, msg, channel, args, userPerms);
     } catch (e) {
         client.say(channel, `An error occurred running command: ${cmd.config.name}. If the issue persists, please contact the developer.`, { replyTo: msg });
