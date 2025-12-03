@@ -23,6 +23,7 @@ export = class PartCommand extends BaseCommand {
         channels.splice(idx, 1);
 
         await channelsdb.set("channels", channels);
+        await client.db.deleteAll({ channelId: msg.channelId, channelName: channel });
         client.part(channel);
         client.logger.log(`←   Channel left: ${channel}`);
     }

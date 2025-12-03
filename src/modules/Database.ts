@@ -29,6 +29,17 @@ class Database {
         }
     }
 
+    async deleteAll(query: any) {
+        let datasets = readdirSync("./dist/datasets/").filter(f => f.endsWith(".js"));
+        for (const dataset of datasets) {
+            let path = dataset.split(".")[0];
+            let entry = this.objQuery(this.db.get(path), query);
+
+            if (entry.data?.length)
+                await this.delete(path, query);
+        }
+    }
+
     load(path: string, query: any, multiple?: boolean): any|null {
         let data = this.db.get(path);
         let entry = this.objQuery(data, query);
