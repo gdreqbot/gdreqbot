@@ -95,6 +95,8 @@ client.onConnect(async () => {
 });
 
 client.onMessage(async (channel, user, text, msg) => {
+    await client.db.setDefault({ channelId: msg.channelId, channelName: channel });
+
     let userPerms: PermLevels;
     let blacklist: Blacklist = client.db.load("blacklist", { channelId: msg.channelId });
     let levels: Levels = client.db.load("levels", { channelId: msg.channelId });
