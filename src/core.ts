@@ -142,7 +142,7 @@ client.onMessage(async (channel, user, text, msg) => {
 
             case ResCode.OK: {
                 client.say(channel, `PogChamp Added '${res.level.name}' (${res.level.id}) by ${res.level.creator} to the queue at position ${levels.levels.length}`, { replyTo: msg });
-                client.logger.log(`Added leve in channel: ${channel}`);
+                client.logger.log(`Added level in channel: ${channel}`);
                 break;
             }
         }
