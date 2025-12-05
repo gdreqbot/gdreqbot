@@ -158,7 +158,7 @@ class Request {
         let sets: Settings = client.db.load("settings", { channelId });
         await client.db.save("settings", { channelId }, { req_enabled: !sets.req_enabled });
 
-        return sets.req_enabled;
+        return !sets.req_enabled;
     }
 
     async set(client: Gdreqbot, channelId: string, key: string, value: string) {
