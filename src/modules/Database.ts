@@ -56,12 +56,13 @@ class Database {
         let entry = this.objQuery(data, query);
 
         if (entry.data?.length) {
-            data[entry.idx[0]] = Object.assign(entry.data[0], newData);
+            const updated = Object.assign(structuredClone(entry.data[0]), newData);
+            data[entry.idx[0]] = updated;
             await this.db.set(path, data);
 
             return entry.data[0];
         } else {
-            entry = Object.assign({}, defaultValues, query, newData);
+            entry = Object.assign(structuredClone(defaultValues), query, newData);
             data.push(entry);
             await this.db.set(path, data);
 
