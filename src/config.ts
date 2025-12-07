@@ -3,5 +3,5 @@ export default {
     clientSecret: process.env.SECRET,
     botId: process.env.BOT_ID,
     ownerId: process.env.OWNER_ID,
-    prefix: "!"
+    prefix: process.env.PREFIX
 };
