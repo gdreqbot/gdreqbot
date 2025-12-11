@@ -5,6 +5,7 @@ import express, { NextFunction, Request, Response } from "express";
 import session from "express-session";
 import passport, { serializeUser } from "passport";
 import { Strategy as twitchStrategy } from "passport-twitch-latest";
+import bodyParser from "body-parser";
 import { v4 as uuid } from "uuid";
 import path from 'path';
 import querystring from "querystring";
@@ -12,6 +13,7 @@ import superagent from "superagent";
 import Gdreqbot, { channelsdb } from './core';
 import { getUserByToken } from "./apis/twitch";
 import { User } from "./structs/user";
+import { Settings } from "./datasets/settings";
 
 const server = express();
 const port = process.env.PORT || 80;
@@ -34,6 +36,7 @@ export = class {
         );
         server.use(passport.initialize());
         server.use(passport.session());
+        server.use(bodyParser.json());
         server.set('views', path.join(__dirname, '../dashboard/views'));
 
         server.set('view engine', 'ejs');
@@ -203,9 +206,12 @@ export = class {
             if ((req.user as User).userId != req.params.user)
                 return res.status(403).send('Unauthorized');
 
+            let sets: Settings = client.db.load("settings", { channelId: (req.user as User).userId });
+
             res.render('dashboard', {
                 isAuthenticated: true,
-                user: req.user
+                user: req.user,
+                sets
             });
         });
 

@@ -17,10 +17,12 @@
                 <p>• If you later want to remove gdreqbot from your chat, use the !part command.</p>
                 <br>
                 <h1 class="title">Settings</h1>
-                <form class="box" action="/download" method="POST" autocomplete="off">
-                    <p class="title is-4">Prefix</p>
-                    <p class="subtitle is-6">The prefix used to call commands</p>
-                    <input class="input" type="text" placeholder="!" name="selected">
+                <form class="box" id="settings">
+                    <div>
+                        <p class="title is-4">Prefix</p>
+                        <p class="subtitle is-6">The prefix used to call commands</p>
+                        <input class="input" type="text" value="!" name="prefix">
+                    </div>
                     <br></br>
                     <button class="button" type="submit">
                         <span class="icon has-text-info">
