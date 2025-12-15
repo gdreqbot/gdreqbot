@@ -18,6 +18,7 @@ import { Levels } from "./datasets/levels";
 import { Perm } from "./datasets/perms";
 import Dashboard from "./server";
 import { User } from "./structs/user";
+import { Settings } from "./datasets/settings";
 
 const tokenData = JSON.parse(fs.readFileSync(`./tokens.${config.botId}.json`, "utf-8"));
 const authProvider = new RefreshingAuthProvider({
@@ -100,6 +101,7 @@ client.onMessage(async (channel, user, text, msg) => {
     let userPerms: PermLevels;
     let blacklist: Blacklist = client.db.load("blacklist", { channelId: msg.channelId });
     let levels: Levels = client.db.load("levels", { channelId: msg.channelId });
+    let sets: Settings = client.db.load("settings", { channelId: msg.channelId });
 
     if (msg.userInfo.userId == config.ownerId) userPerms = PermLevels.DEV;
     else if (msg.userInfo.isBroadcaster) userPerms = PermLevels.STREAMER;
@@ -126,7 +128,7 @@ client.onMessage(async (channel, user, text, msg) => {
             }
 
             case ResCode.MAX_PER_USER: {
-                client.say(channel, "Kappa You have the max amount of levels in the queue (2)", { replyTo: msg });
+                client.say(channel, `Kappa You have the max amount of levels in the queue (${sets.max_levels_per_user})`, { replyTo: msg });
                 break;
             }
 
