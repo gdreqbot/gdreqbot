@@ -93,6 +93,29 @@ client.onConnect(async () => {
     } catch {}
 
     client.logger.log("Ready");
+    client.logger.log(`Joining ${channelsdb.get("channels").length} channels.`);
+});
+
+client.onJoinFailure(async (channel, reason) => {
+    let channels: User[] = channelsdb.get("channels");
+    let idx = channels.findIndex(c => c.userName == channel);
+    if (idx == -1) return;
+
+    let channelId = channels[idx].userId;
+
+    switch (reason) {
+        case "msg_banned": {
+            await client.db.deleteAll({ channelId, channelName: channel });
+
+            channels.splice(idx, 1);
+            await channelsdb.set("channels", channels);
+            client.logger.log(`←   Channel left: ${channel} (banned)`);
+            break;
+        }
+
+        default:
+            break;
+    }
 });
 
 client.onMessage(async (channel, user, text, msg) => {

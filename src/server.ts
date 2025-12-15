@@ -70,11 +70,11 @@ export = class {
                 let channel: User = channels.find(c => c.userId == channelId);
 
                 if (!channel) {
+                    await client.join(channelName);
+
                     // push to channels db
                     channels.push({ userId: channelId, userName: channelName });
                     await channelsdb.set("channels", channels);
-
-                    await client.join(channelName);
                     await client.db.setDefault({ channelId, channelName });
 
                     await client.say(channelName, "Thanks for adding gdreqbot! You can get a list of commands by typing !help");
