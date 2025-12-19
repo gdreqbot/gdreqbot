@@ -14,7 +14,7 @@
                 </form>
                 <hr>
                 <p>• It's a good idea to VIP or MOD gdreqbot to avoid chat restrictions (e.g. followers-only and sub-only chat, slowmode, or others).</p>
-                <p>• If you later want to remove gdreqbot from your chat, use the !part command.</p>
+                <p>• If you later want to remove gdreqbot from your chat, use the !part command, or the button at the bottom of the page.</p>
                 <br>
                 <h1 class="title">Settings</h1>
                 <form class="box" id="settings">
@@ -51,7 +51,7 @@
                             <p class="title is-5">!ping</p>
                             <p class="subtitle is-6">Gives the bot latency</p>
                         </div>
-                        <div class="dropdown" style="float: right">
+                        <div class="dropdown" style="float: right" data-default="item1">
                             <div class="dropdown-trigger">
                                 <button class="button" aria-haspopup="true" aria-controls="dropdown-menu-1">
                                 <span>Dropdown button</span>
@@ -66,6 +66,9 @@
                                     <a class="dropdown-item" data-value="item2">item2</a>
                                 </div>
                             </div>
+                            <button class="button reset-dropdown" type="button" style="margin-left: 10px">
+                                <p class="has-text-danger">Reset</p>
+                            </button>
                             <input type="hidden" id="dropdown1-value" name="dropdown1" value="">
                         </div>
                     </div>
@@ -76,7 +79,7 @@
                             <p class="title is-5">!ping</p>
                             <p class="subtitle is-6">Gives the bot latency</p>
                         </div>
-                        <div class="dropdown" style="float: right">
+                        <div class="dropdown" style="float: right" data-default="item2">
                             <div class="dropdown-trigger">
                                 <button class="button" aria-haspopup="true" aria-controls="dropdown-menu-2">
                                 <span>Dropdown button</span>
@@ -91,6 +94,9 @@
                                     <a class="dropdown-item" data-value="item2">item2</a>
                                 </div>
                             </div>
+                            <button class="button reset-dropdown" type="button" style="margin-left: 10px">
+                                <p class="has-text-danger">Reset</p>
+                            </button>
                             <input type="hidden" id="dropdown2-value" name="dropdown2" value="">
                         </div>
                     </div>
@@ -109,10 +115,10 @@
                         <span class="icon has-text-danger">
                             <i class="fas fa-arrow-left"></i>
                         </span>
-                        <span>Part</span>
+                        <span class="has-text-danger">Part</span>
                     </button>
                 </form>
-                <p>Note: parting gdreqbot will also log you out</p>
+                <p>Note: parting gdreqbot will also log you out and <strong>reset your settings!</strong></p>
             </div>
         </section>
         <script>
@@ -163,7 +169,22 @@
             dropdowns.forEach(dropdown => {
                 let input = dropdown.querySelector(`input[type="hidden"]`);
                 let button = dropdown.querySelector('.dropdown-trigger button');
-                let selectedItem = null;
+                let resetButton = dropdown.querySelector('.reset-dropdown');
+                let items = dropdown.querySelectorAll('.dropdown-item');
+
+                let defaultValue = dropdown.dataset.default;
+
+                function setValue(value) {
+                    input.value = value;
+                    button.innerHTML = `<span>${value}</span><span class="icon is-small"><i class="fas fa-angle-down" aria-hidden="true"></i></span>`;
+                    items.forEach(i => i.classList.toggle('is-active', i.getAttribute('data-value') == value));
+                }
+
+                resetButton.addEventListener('click', evt => {
+                    evt.preventDefault();
+                    setValue(defaultValue);
+                    resetButton.disabled = true;
+                });
 
                 let trigger = dropdown.querySelector('.dropdown-trigger');
                 trigger.addEventListener('click', evt => {
@@ -179,20 +200,14 @@
                     dropdown.classList.toggle('is-active');
                 });
 
-                let items = dropdown.querySelectorAll('.dropdown-item');
                 items.forEach(item => {
                     item.addEventListener('click', evt => {
                         evt.preventDefault();
 
-                        let selected = item.getAttribute('data-value');
-                        input.value = selected;
-                        button.innerHTML = `<span>${selected}</span><span class="icon is-small"><i class="fas fa-angle-down" aria-hidden="true"></i></span>`;
-
-                        items.forEach(i => i.classList.remove('is-active'));
-                        item.classList.add('is-active');
-                        console.log('selected: ', selected);
-
+                        setValue(item.getAttribute('data-value'));
                         dropdown.classList.remove('is-active');
+
+                        if (resetButton.disabled) resetButton.disabled = false;
                     });
                 });
             });
