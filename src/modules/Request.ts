@@ -163,7 +163,7 @@ class Request {
 
     async set(client: Gdreqbot, channelId: string, key: string, value: string) {
         let sets: Settings = client.db.load("settings", { channelId });
-        
+
         // ugly as hell ik
         switch (key) {
             case "req_enabled": {

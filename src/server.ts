@@ -109,11 +109,25 @@ export = class {
             renderView(req, res, 'index');
         });
 
-        server.get('/auth', passport.authenticate('twitch'));
+        server.get('/auth', (req, res, next) => {
+            let redirectTo = req.query.redirectTo || 'dashboard';
+
+            passport.authenticate('twitch', {
+                state: redirectTo as string
+            })(req, res, next);
+        });
         server.get('/auth/callback', passport.authenticate('twitch', {
-            successRedirect: '/dashboard',
             failureRedirect: '/auth/error'
-        }));
+        }), (req, res) => {
+            let redirectTo = req.query.state;
+
+            if (redirectTo == 'add')
+                res.redirect('/auth/success');
+            else if (redirectTo == 'dashboard')
+                res.redirect('/dashboard');
+            else
+                res.redirect('/');
+        });
 
         server.get('/auth/success', (req, res) => {
             renderView(req, res, 'authsuccess');
@@ -159,6 +173,8 @@ export = class {
             let perms: Perm[] = client.db.load("perms", { channelId: userId }).perms;
 
             let cmdData: any = [];
+            let setData: any = this.getSettings(sets);
+            console.log(setData);
 
             client.commands.forEach(cmd => {
                 if (cmd.config.permLevel == PermLevels.DEV) return;
@@ -166,9 +182,9 @@ export = class {
                 let permData = perms.find(p => p.cmd == cmd.config.name);
 
                 let toPush = {
-                    name: `${client.config.prefix}${cmd.config.name}`,
+                    name: cmd.config.name,
                     desc: cmd.config.description,
-                    perm: this.normalize(PermLevels[permData?.perm || cmd.config.permLevel]),
+                    perm: this.normalize(PermLevels[permData?.perm ?? cmd.config.permLevel]),
                     defaultPerm: this.normalize(PermLevels[cmd.config.permLevel]),
                     isDefault: !Boolean(permData)
                 };
@@ -182,7 +198,7 @@ export = class {
             res.render('dashboard', {
                 isAuthenticated: true,
                 user: req.user,
-                sets,
+                setData,
                 cmdData,
                 perms: permLiterals.map(p => this.normalize(p))
             });
@@ -271,8 +287,30 @@ export = class {
     checkAuth(req: Request, res: Response, next: NextFunction) {
         if (req.isAuthenticated())
             return next();
-        
+
         res.redirect('/');
+    }
+
+    getSettings(sets: any) {
+        const { defaultValues } = require('./datasets/settings');
+        let obj: any = {};
+
+        for (let [key, value] of Object.entries(defaultValues).slice(3)) {
+            if (!sets[key])
+                obj[key] = {
+                    value,
+                    defaultValue: value,
+                    isDefault: true
+                };
+            else
+                obj[key] = {
+                    value: sets[key],
+                    defaultValue: value,
+                    isDefault: sets[key] == defaultValues[key]
+                };
+        }
+
+        return obj;
     }
 
     parseSettings(data: any) {
@@ -303,7 +341,7 @@ export = class {
             let permData = perms.find(p => p.cmd == cmd.config.name);
             let permValue: any = PermLevels[(value as any).toUpperCase()];
 
-            if (permValue != (permData?.perm || cmd.config.permLevel)) {
+            if (permValue != (permData?.perm ?? cmd.config.permLevel)) {
                 filtered.push({
                     cmd: permValue == cmd.config.permLevel ? `${cmd.config.name}.d` : cmd.config.name,
                     perm: permValue

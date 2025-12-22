@@ -1,4 +1,28 @@
 <%- include('components/header') %>
+        <style>
+            .input-container {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+            }
+
+            .reset {
+                margin-left: 10px;
+                color: #ff3860;
+                border: 1px solid #ff3860;
+            }
+
+            .reset:hover:enabled {
+                background-color: #ff3860;
+                color: white;
+                border-color: #ff3860;
+            }
+
+            .reset:hover:disabled {
+                color: #ff3860;
+            }
+        </style>
         <section class="section">
             <div class="container">
                 <h1 class="title">Dashboard</h1>
@@ -14,7 +38,7 @@
                 </form>
                 <hr>
                 <p>• It's a good idea to VIP or MOD gdreqbot to avoid chat restrictions (e.g. followers-only and sub-only chat, slowmode, or others).</p>
-                <p>• If you later want to remove gdreqbot from your chat, use the <%= sets.prefix %>part command, or the button at the bottom of the page.</p>
+                <p>• If you later want to remove gdreqbot from your chat, use the <%= setData.prefix.value %>part command, or the button at the bottom of the page.</p>
                 <br>
                 <h1 class="title">Settings</h1>
                 <form class="box" id="settings" autocomplete="off">
@@ -22,19 +46,28 @@
                     <div>
                         <p class="title is-5">Prefix</p>
                         <p class="subtitle is-6">The prefix used to call commands</p>
-                        <input class="input" type="text" value="<%= sets.prefix %>" name="prefix" id="prefix" required>
+                        <div class="input-container">
+                            <input class="input" type="text" value="<%= setData.prefix.value %>" name="prefix" id="prefix" data-default="<%= setData.prefix.defaultValue %>" required>
+                            <button class="button reset" type="button" <% if (setData.prefix.isDefault) { %> disabled <% } %>>Reset</button>
+                        </div>
                     </div>
                     <br>
                     <div>
                         <p class="title is-5">Max Levels Per User</p>
                         <p class="subtitle is-6">The maximum amount of levels a user can have in the queue at the same time (-1 = disabled)</p>
-                        <input class="input" type="number" min="-1" value="<%= sets.max_levels_per_user %>" name="max_levels_per_user" id="max_levels_per_user">
+                        <div class="input-container">
+                            <input class="input" type="number" min="-1" value="<%= setData.max_levels_per_user.value %>" name="max_levels_per_user" id="max_levels_per_user" data-default="<%= setData.max_levels_per_user.defaultValue %>">
+                            <button class="button reset" type="button" <% if (setData.max_levels_per_user.isDefault) { %> disabled <% } %>>Reset</button>
+                        </div>
                     </div>
                     <br>
                     <div>
                         <p class="title is-5">Max Queue Size</p>
                         <p class="subtitle is-6">The maximum amount of levels the queue can hold (-1 = disabled)</p>
-                        <input class="input" type="number" min="-1" value="<%= sets.max_queue_size %>" name="max_queue_size" id="max_queue_size">
+                        <div class="input-container">
+                            <input class="input" type="number" min="-1" value="<%= setData.max_queue_size.value %>" name="max_queue_size" id="max_queue_size" data-default="<%= setData.max_queue_size.defaultValue %>">
+                            <button class="button reset" type="button" <% if (setData.max_queue_size.isDefault) { %> disabled <% } %>>Reset</button>
+                        </div>
                     </div>
                     <br></br>
                     <button class="button" type="submit">
@@ -51,8 +84,8 @@
                     <% for (let i = 0; i < cmdData.length; i++) { %>
                     <div>
                         <div style="float: left">
-                            <p class="title is-5"><%= cmdData[i].name %></p>
-                            <p class="subtitle is-6"><%= cmdData[i].desc %></p>
+                            <p class="title is-5"><%= setData.prefix.value + cmdData[i].name %></p>
+                            <p class="subtitle is-6"><%= cmdData[i].desc.replace("!", setData.prefix.value) %></p>
                         </div>
                         <div class="dropdown" style="float: right" data-default="<%= cmdData[i].defaultPerm %>">
                             <div class="dropdown-trigger">
@@ -70,10 +103,8 @@
                                     <% }); %>
                                 </div>
                             </div>
-                            <button class="button reset-dropdown" type="button" style="margin-left: 10px" <% if (cmdData[i].isDefault) { %> disabled <% } %>>
-                                <p class="has-text-danger">Reset</p>
-                            </button>
-                            <input type="hidden" id="dropdown<%= i %>-value" name="<%= cmdData[i].name.slice(1) %>" value="">
+                            <button class="button reset" type="button" <% if (cmdData[i].isDefault) { %> disabled <% } %>>Reset</button>
+                            <input type="hidden" id="dropdown<%= i %>-value" name="<%= cmdData[i].name %>" value="">
                         </div>
                     </div>
                     <br>
@@ -128,7 +159,27 @@
             let settings = document.getElementById("settings");
             settings.querySelectorAll('input').forEach(input => {
                 input.addEventListener('input', () => {
-                    changes = true;
+                    let resetButton = input.closest('.input-container').querySelector('.reset');
+                    if (input.value != input.dataset.default) {
+                        resetButton.disabled = false;
+                        changes = true;
+                    } else {
+                        resetButton.disabled = true;
+                        changes = false;
+                    }
+                });
+            });
+
+            settings.querySelectorAll('.reset').forEach(resetButton => {
+                resetButton.addEventListener('click', evt => {
+                console.log('shish')
+                    evt.preventDefault();
+                    let input = resetButton.parentElement.querySelector('input');
+
+                    input.value = input.dataset.default;
+                    resetButton.disabled = true;
+
+                    changes = false;
                 });
             });
 
@@ -157,7 +208,7 @@
             dropdowns.forEach(dropdown => {
                 let input = dropdown.querySelector(`input[type="hidden"]`);
                 let button = dropdown.querySelector('.dropdown-trigger button');
-                let resetButton = dropdown.querySelector('.reset-dropdown');
+                let resetButton = dropdown.querySelector('.reset');
                 let items = dropdown.querySelectorAll('.dropdown-item');
 
                 let defaultValue = dropdown.dataset.default;
@@ -173,7 +224,7 @@
                     setValue(defaultValue);
                     resetButton.disabled = true;
 
-                    changes = true;
+                    changes = false;
                 });
 
                 let trigger = dropdown.querySelector('.dropdown-trigger');
