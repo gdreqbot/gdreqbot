@@ -34,7 +34,7 @@ export = class HelpCommand extends BaseCommand {
                 if (!cmd.config.supportsPrivilege)
                     return client.say(channel, "That command doesn't support privilege mode.", { replyTo: msg });
 
-                str = `${sets.prefix ?? client.config.prefix}pr ${cmd.config.name}: ${cmd.config.privilegeDesc} | args: ${cmd.config.privilegeArgs ? `${sets.prefix ?? client.config.prefix}pr ${cmd.config.name} ${cmd.config.privilegeArgs}` : "none"}`;
+                str = `${sets.prefix ?? client.config.prefix}pr ${cmd.config.name}: ${sets.prefix ? cmd.config.privilegeDesc.replace(client.config.prefix, sets.prefix) : cmd.config.privilegeDesc} | args: ${cmd.config.privilegeArgs ? `${sets.prefix ?? client.config.prefix}pr ${cmd.config.name} ${cmd.config.privilegeArgs}` : "none"}`;
                 if (sets.prefix) str.replace(client.config.prefix, sets.prefix);
             } else {
                 str = `${sets.prefix ?? client.config.prefix}pr help <command> for more info | ${client.commands.values().filter(c => c.config.supportsPrivilege).map(c => `${sets.prefix?? client.config.prefix}pr ${c.config.name}`).toArray().join(sets.prefix == "-" ? " | " : " - ")}`
@@ -45,8 +45,7 @@ export = class HelpCommand extends BaseCommand {
             if (cmd) {
                 let customPerm = perms?.find(p => p.cmd == cmd.config.name);
 
-                str = `${sets.prefix ?? client.config.prefix}${cmd.config.name}: ${cmd.config.description} | args: ${cmd.config.args ? `${sets.prefix ?? client.config.prefix}${cmd.config.name} ${cmd.config.args}` : "none"} | aliases: ${cmd.config.aliases?.join(", ") || "none"} | required perm: ${PermLevels[customPerm?.perm || cmd.config.permLevel]}`;
-                if (sets.prefix) str.replace(client.config.prefix, sets.prefix);
+                str = `${sets.prefix ?? client.config.prefix}${cmd.config.name}: ${sets.prefix ? cmd.config.description.replace(client.config.prefix, sets.prefix) : cmd.config.description} | args: ${cmd.config.args ? `${sets.prefix ?? client.config.prefix}${cmd.config.name} ${cmd.config.args}` : "none"} | aliases: ${cmd.config.aliases?.join(", ") || "none"} | required perm: ${PermLevels[customPerm?.perm || cmd.config.permLevel]}`;
             } else {
                 str = `${sets.prefix ?? client.config.prefix}help <command> for more info | ${client.commands.values().filter(c => (perms?.find(p => p.cmd == c.config.name)?.perm || c.config.permLevel) <= userPerms).map(c => `${sets.prefix ?? client.config.prefix}${c.config.name}`).toArray().join(sets.prefix == "-" ? " | " : " - ")}`;
             }
