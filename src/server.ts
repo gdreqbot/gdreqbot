@@ -153,6 +153,14 @@ export = class {
             renderView(req, res, 'privacy-policy');
         });
 
+        server.get('/faq', (req, res) => {
+            renderView(req, res, 'faq');
+        });
+
+        server.get('/updates', (req, res) => {
+            renderView(req, res, 'updates');
+        });
+
         server.get('/dashboard', (req, res) => {
             if (req.isAuthenticated())
                 return res.redirect(`/dashboard/${(req.user as User).userId}`);
