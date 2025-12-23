@@ -174,7 +174,6 @@ export = class {
 
             let cmdData: any = [];
             let setData: any = this.getSettings(sets);
-            console.log(setData);
 
             client.commands.forEach(cmd => {
                 if (cmd.config.permLevel == PermLevels.DEV) return;
@@ -239,6 +238,7 @@ export = class {
                     });
 
                     await client.db.save("perms", { channelId: userId }, { perms });
+                    client.logger.log(`Dashboard: updated perms for channel: ${userName}`);
                     break;
                 }
 
@@ -318,6 +318,10 @@ export = class {
 
         for (let [key, value] of Object.entries(data)) {
             if (key == "formType") continue;
+            if (!value) {
+                parsed[key] = -1;
+                continue;
+            }
 
             let n = parseInt(value as any);
             if (!isNaN(n))

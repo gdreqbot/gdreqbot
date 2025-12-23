@@ -36,6 +36,11 @@ export = class SetCommand extends BaseCommand {
                 break;
             }
 
+            case ResCode.INVALID_RANGE: {
+                client.say(channel, "Error: value must be either -1 or greater than 0");
+                break;
+            }
+
             case ResCode.OK: {
                 client.say(channel, `Set '${args[0]}' to '${args[1]}'`, { replyTo: msg });
                 break;

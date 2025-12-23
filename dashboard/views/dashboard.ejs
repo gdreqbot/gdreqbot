@@ -22,6 +22,34 @@
             .reset:hover:disabled {
                 color: #ff3860;
             }
+
+            .enable {
+                margin-left: 10px;
+                color: #1ca64c;
+                border: 1px solid #1ca64c;
+            }
+
+            .enable:hover {
+                background-color: #1ca64c;
+                color: white;
+                border-color: #1ca64c;
+            }
+
+            .disable {
+                margin-left: 10px;
+                color: #ff3860;
+                border: 1px solid #ff3860;
+            }
+
+            .disable:hover {
+                background-color: #ff3860;
+                color: white;
+                border-color: #ff3860;
+            }
+
+            .input:disabled {
+                background-color: #17181c;
+            }
         </style>
         <section class="section">
             <div class="container">
@@ -47,25 +75,26 @@
                         <p class="title is-5">Prefix</p>
                         <p class="subtitle is-6">The prefix used to call commands</p>
                         <div class="input-container">
-                            <input class="input" type="text" value="<%= setData.prefix.value %>" name="prefix" id="prefix" data-default="<%= setData.prefix.defaultValue %>" required>
+                            <input class="input" type="text" value="<%= setData.prefix.value %>" name="prefix" id="required" data-default="<%= setData.prefix.defaultValue %>" required>
                             <button class="button reset" type="button" <% if (setData.prefix.isDefault) { %> disabled <% } %>>Reset</button>
                         </div>
                     </div>
                     <br>
                     <div>
                         <p class="title is-5">Max Levels Per User</p>
-                        <p class="subtitle is-6">The maximum amount of levels a user can have in the queue at the same time (-1 = disabled)</p>
+                        <p class="subtitle is-6">The maximum amount of levels a user can have in the queue at the same time</p>
                         <div class="input-container">
-                            <input class="input" type="number" min="-1" value="<%= setData.max_levels_per_user.value %>" name="max_levels_per_user" id="max_levels_per_user" data-default="<%= setData.max_levels_per_user.defaultValue %>">
+                            <input class="input" type="number" min="1" value="<%= setData.max_levels_per_user.isDefault ? "" : setData.max_levels_per_user.value %>" name="max_levels_per_user" id="max_levels_per_user" data-default="">
                             <button class="button reset" type="button" <% if (setData.max_levels_per_user.isDefault) { %> disabled <% } %>>Reset</button>
+                            <!-- <button class="button <%= setData.max_levels_per_user.isDefault ? "enable" : "disable" %>" type="button"><%= setData.max_levels_per_user.isDefault ? "Enable" : "Disable" %></button> -->
                         </div>
                     </div>
                     <br>
                     <div>
                         <p class="title is-5">Max Queue Size</p>
-                        <p class="subtitle is-6">The maximum amount of levels the queue can hold (-1 = disabled)</p>
+                        <p class="subtitle is-6">The maximum amount of levels the queue can hold</p>
                         <div class="input-container">
-                            <input class="input" type="number" min="-1" value="<%= setData.max_queue_size.value %>" name="max_queue_size" id="max_queue_size" data-default="<%= setData.max_queue_size.defaultValue %>">
+                            <input class="input" type="number" min="1" value="<%= setData.max_queue_size.isDefault ? "" : setData.max_queue_size.value %>" name="max_queue_size" id="max_queue_size" data-default="">
                             <button class="button reset" type="button" <% if (setData.max_queue_size.isDefault) { %> disabled <% } %>>Reset</button>
                         </div>
                     </div>
@@ -179,7 +208,7 @@
                     input.value = input.dataset.default;
                     resetButton.disabled = true;
 
-                    changes = !isDefault[input.id];
+                    changes = !isDefault[input.name];
                 });
             });
 
@@ -269,7 +298,7 @@
                 let permsInputs = document.querySelectorAll('#perms .dropdown');
 
                 settingsInputs.forEach(input => {
-                    isDefault[input.id] = input.value == input.dataset.default
+                    isDefault[input.name] = input.value == input.dataset.default
                 });
 
                 permsInputs.forEach((dropdown, i) => {

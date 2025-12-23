@@ -183,18 +183,26 @@ class Request {
             }
 
             case "max_levels_per_user": {
-                if (isNaN(parseInt(value)))
-                    return { status: ResCode.INVALID_VALUE };
+                let n = parseInt(value);
 
-                sets.max_levels_per_user = parseInt(value);
+                if (isNaN(n))
+                    return { status: ResCode.INVALID_VALUE };
+                else if (n < -1 || n == 0)
+                    return { status: ResCode.INVALID_RANGE };
+
+                sets.max_levels_per_user = n;
                 break;
             }
 
             case "max_queue_size": {
-                if (isNaN(parseInt(value)))
-                    return { status: ResCode.INVALID_VALUE };
+                let n = parseInt(value);
 
-                sets.max_queue_size = parseInt(value);
+                if (isNaN(n))
+                    return { status: ResCode.INVALID_VALUE };
+                else if (n < -1 || n == 0)
+                    return { status: ResCode.INVALID_RANGE };
+
+                sets.max_queue_size = n;
                 break;
             }
 
@@ -219,6 +227,7 @@ export enum ResCode {
     FULL,
     INVALID_KEY,
     INVALID_VALUE,
+    INVALID_RANGE,
     END,
     ERROR
 }
