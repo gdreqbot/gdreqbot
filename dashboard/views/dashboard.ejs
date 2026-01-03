@@ -167,7 +167,7 @@
                 let userId = "<%= user.userId %>";
 
                 try {
-                    let res = await fetch(`https://gdreqbot.ddns.net/dashboard/${userId}`, {
+                    let res = await fetch(`http://localhost:3000/dashboard/${userId}`, {
                         method: "POST",
                         body: formData
                     });

@@ -36,6 +36,7 @@ authProvider.onRefresh((userId, newTokenData) => {
 
 class Gdreqbot extends ChatClient {
     commands: Map<string, BaseCommand>;
+    cooldowns: Map<string, Map<string, number>>;
     cmdLoader: CommandLoader;
     logger: Logger;
     db: Database;
@@ -47,6 +48,7 @@ class Gdreqbot extends ChatClient {
         super(options);
 
         this.commands = new Map();
+        this.cooldowns = new Map();
         this.cmdLoader = new CommandLoader();
         this.logger = new Logger();
         this.db = new Database("data.db");
@@ -119,7 +121,7 @@ client.onJoinFailure(async (channel, reason) => {
 });
 
 client.onMessage(async (channel, user, text, msg) => {
-    if (msg.userInfo.userId == client.config.botId) return;
+    if (msg.userInfo.userId == client.config.botId && process.env.ENVIRONMENT != "dev") return;
 
     await client.db.setDefault({ channelId: msg.channelId, channelName: channel });
 
@@ -143,44 +145,11 @@ client.onMessage(async (channel, user, text, msg) => {
         let reqPerm = perms?.find(p => p.cmd == client.commands.get("req").config.name);
         if ((reqPerm?.perm || client.commands.get("req").config.permLevel) > userPerms) return;
 
-        let res = await client.req.addLevel(client, msg.channelId, { userId: msg.userInfo.userId, userName: msg.userInfo.userName }, isId[0]);
-            
-        switch (res.status) {
-            case ResCode.NOT_FOUND: {
-                client.say(channel, "Kappa Couldn't find a level matching that ID (is it unlisted?)", { replyTo: msg });
-                break;
-            }
-
-            case ResCode.ALREADY_ADDED: {
-                client.say(channel, "Kappa That level is already in the queue.", { replyTo: msg });
-                break;
-            }
-
-            case ResCode.MAX_PER_USER: {
-                client.say(channel, `Kappa You have the max amount of levels in the queue (${sets.max_levels_per_user})`, { replyTo: msg });
-                break;
-            }
-
-            case ResCode.FULL: {
-                client.say(channel, `Kappa The queue is full (max ${sets.max_queue_size} levels)`, { replyTo: msg });
-                break;
-            }
-
-            case ResCode.DISABLED: {
-                client.say(channel, "Kappa Requests are disabled.", { replyTo: msg });
-                break;
-            }
-
-            case ResCode.ERROR: {
-                client.say(channel, "An error occurred. If the issue persists, please contact the developer.", { replyTo: msg });
-                break;
-            }
-
-            case ResCode.OK: {
-                client.say(channel, `PogChamp Added '${res.level.name}' (${res.level.id}) by ${res.level.creator} to the queue at position ${levels.levels.length}`, { replyTo: msg });
-                client.logger.log(`Added level in channel: ${channel}`);
-                break;
-            }
+        try {
+            await client.commands.get("req").run(client, msg, channel, [isId[0], "idreq"]);  // change args in the future cause stupid
+        } catch (e) {
+            client.say(channel, "An error occurred running command: req. If the issue persists, please contact the developer.", { replyTo: msg });
+            console.error(e);
         }
 
         return;

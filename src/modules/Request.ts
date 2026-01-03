@@ -1,22 +1,22 @@
 import Gdreqbot from "../core";
-import superagent from "superagent";
 import { LevelData } from "../datasets/levels";
 import { User } from "../structs/user";
 import { Settings } from "../datasets/settings";
 import * as gd from "../apis/gd";
 
 class Request {
-    private parseLevel(raw: string, user: User): LevelData {
+    parseLevel(raw: string, user?: User): LevelData {
         return {
             name: raw.split(":")[3],
             creator: raw.split("#")[1].split(":")[1],
             id: raw.split(":")[1],
-            user
+            user: user ?? null
         };
     }
 
     async addLevel(client: Gdreqbot, channelId: string, user: User, query: string) {
         let sets: Settings = client.db.load("settings", { channelId });
+        let blacklisted: LevelData[] = client.db.load("blacklist", { channelId })?.levels;
         if (!sets.req_enabled) return { status: ResCode.DISABLED };
 
         try {
@@ -26,6 +26,9 @@ class Request {
             else if (raw == "-1") return { status: ResCode.NOT_FOUND };
 
             let newLvl = this.parseLevel(raw, user);
+            if (blacklisted?.find(l => l.id == newLvl.id))
+                return { status: ResCode.BLACKLISTED };
+
             let levels: LevelData[] = client.db.load("levels", { channelId }).levels;
 
             if (levels.find(l => l.id == newLvl.id))
@@ -229,5 +232,7 @@ export enum ResCode {
     INVALID_VALUE,
     INVALID_RANGE,
     END,
+    BLACKLISTED,
+    GLOBAL_BL,
     ERROR
 }
