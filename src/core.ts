@@ -10,11 +10,10 @@ import BaseCommand from "./structs/BaseCommand";
 import CommandLoader from "./modules/CommandLoader";
 import Logger from "./modules/Logger";
 import Database from "./modules/Database";
-import Request, { ResCode } from "./modules/Request";
+import Request from "./modules/Request";
 import config from "./config";
 import PermLevels from "./structs/PermLevels";
 import { Blacklist } from "./datasets/blacklist";
-import { Levels } from "./datasets/levels";
 import { Perm } from "./datasets/perms";
 import Dashboard from "./server";
 import { User } from "./structs/user";
@@ -43,6 +42,7 @@ class Gdreqbot extends ChatClient {
     req: Request;
     config: typeof config;
     server: Server;
+    blacklist: MapDB;
 
     constructor(options: ChatClientOptions) {
         super(options);
@@ -54,6 +54,7 @@ class Gdreqbot extends ChatClient {
         this.db = new Database("data.db");
         this.req = new Request();
         this.config = config;
+        this.blacklist = new MapDB("blacklist.db");
     }
 }
 
@@ -127,7 +128,6 @@ client.onMessage(async (channel, user, text, msg) => {
 
     let userPerms: PermLevels;
     let blacklist: Blacklist = client.db.load("blacklist", { channelId: msg.channelId });
-    let levels: Levels = client.db.load("levels", { channelId: msg.channelId });
     let sets: Settings = client.db.load("settings", { channelId: msg.channelId });
     let perms: Perm[] = client.db.load("perms", { channelId: msg.channelId }).perms;
 

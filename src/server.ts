@@ -16,6 +16,7 @@ import { Perm } from "./datasets/perms";
 import PermLevels from "./structs/PermLevels";
 import BaseCommand from "./structs/BaseCommand";
 import { PUT } from "superagent";
+import { Blacklist } from "./datasets/blacklist";
 
 const server = express();
 const port = process.env.PORT || 80;
@@ -192,6 +193,7 @@ export = class {
 
             let sets: Settings = client.db.load("settings", { channelId: userId });
             let perms: Perm[] = client.db.load("perms", { channelId: userId }).perms;
+            let bl: Blacklist = client.db.load("blacklist", { channelId: userId });
 
             let cmdData: any = [];
             let setData: any = this.getSettings(sets);
@@ -220,7 +222,8 @@ export = class {
                 user: req.user,
                 setData,
                 cmdData,
-                perms: permLiterals.map(p => this.normalize(p))
+                perms: permLiterals.map(p => this.normalize(p)),
+                bl
             });
         });
 
