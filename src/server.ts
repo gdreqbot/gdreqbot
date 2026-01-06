@@ -266,7 +266,12 @@ export = class {
                     break;
                 }
 
-                case "blacklist": {
+                case "blacklist-users": {
+                    console.log(req.body);
+                    break;
+                }
+
+                case "blacklist-levels": {
                     console.log(req.body);
                     break;
                 }
