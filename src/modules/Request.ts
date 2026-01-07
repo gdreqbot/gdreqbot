@@ -1,22 +1,23 @@
 import Gdreqbot from "../core";
-import superagent from "superagent";
 import { LevelData } from "../datasets/levels";
 import { User } from "../structs/user";
 import { Settings } from "../datasets/settings";
 import * as gd from "../apis/gd";
 
 class Request {
-    private parseLevel(raw: string, user: User): LevelData {
+    parseLevel(raw: string, user?: User): LevelData {
         return {
             name: raw.split(":")[3],
             creator: raw.split("#")[1].split(":")[1],
             id: raw.split(":")[1],
-            user
+            user: user ?? null
         };
     }
 
     async addLevel(client: Gdreqbot, channelId: string, user: User, query: string) {
         let sets: Settings = client.db.load("settings", { channelId });
+        let blacklisted: LevelData[] = client.db.load("blacklist", { channelId })?.levels;
+        let bl: string[] = client.blacklist.get("levels");
         if (!sets.req_enabled) return { status: ResCode.DISABLED };
 
         try {
@@ -26,6 +27,11 @@ class Request {
             else if (raw == "-1") return { status: ResCode.NOT_FOUND };
 
             let newLvl = this.parseLevel(raw, user);
+            if (bl?.length && bl.includes(newLvl.id))
+                return { status: ResCode.GLOBAL_BL };
+            else if (blacklisted?.find(l => l.id == newLvl.id))
+                return { status: ResCode.BLACKLISTED };
+
             let levels: LevelData[] = client.db.load("levels", { channelId }).levels;
 
             if (levels.find(l => l.id == newLvl.id))
@@ -83,7 +89,28 @@ class Request {
         }
 
         let pos = levels.findIndex(l => l.id == query || l.name.toLowerCase() == query.toLowerCase());
-        return { status: ResCode.OK, level, lvlPos: pos+1 };
+        return { status: ResCode.OK, level, pos };
+    }
+
+    async swapLevels(client: Gdreqbot, channelId: string, query1: string, query2: string) {
+        let levels: LevelData[] = client.db.load("levels", { channelId }).levels;
+        if (!levels.length)
+            return { status: ResCode.EMPTY };
+
+        let level1 = this.getLevel(client, channelId, query1);
+        if (level1.status == ResCode.NOT_FOUND)
+            return { status: ResCode.NOT_FOUND, query: 0 };
+        
+        let level2 = this.getLevel(client, channelId, query2);
+        if (level2.status == ResCode.NOT_FOUND)
+            return { status: ResCode.NOT_FOUND, query: 1 };
+
+        let temp = level1;
+        levels[level2.pos] = level1.level;
+        levels[temp.pos] = level2.level;
+
+        await client.db.save("levels", { channelId }, { levels });
+        return { status: ResCode.OK, levels: [level1, level2] };
     }
 
     async clear(client: Gdreqbot, channelId: string) {
@@ -97,11 +124,22 @@ class Request {
 
     async next(client: Gdreqbot, channelId: string) {
         let levels: LevelData[] = client.db.load("levels", { channelId }).levels;
+        let sets: Settings = client.db.load("settings", { channelId });
+
         if (!levels.length)
             return { status: ResCode.EMPTY };
 
         try {
-            levels.shift();
+            if (sets.random_queue) {
+                let idx = Math.floor(Math.random() * levels.length);
+                await this.swapLevels(client, channelId, levels[0].id, levels[idx].id);
+
+                levels = client.db.load("levels", { channelId }).levels;
+                levels.splice(idx, 1);
+            } else {
+                levels.shift();
+            }
+
             await client.db.save("levels", { channelId }, { levels });
         } catch (e) {
             console.error(e);
@@ -112,7 +150,7 @@ class Request {
         if (!level)
             return { status: ResCode.EMPTY };
 
-        return { status: ResCode.OK, level };
+        return { status: ResCode.OK, level, random: sets.random_queue };
     }
 
     list(client: Gdreqbot, channelId: string, page?: number) {
@@ -159,6 +197,13 @@ class Request {
         await client.db.save("settings", { channelId }, { req_enabled: !sets.req_enabled });
 
         return !sets.req_enabled;
+    }
+
+    async toggleRandom(client: Gdreqbot, channelId: string) {
+        let sets: Settings = client.db.load("settings", { channelId });
+        await client.db.save("settings", { channelId }, { random_queue: !sets.random_queue });
+
+        return !sets.random_queue;
     }
 
     async set(client: Gdreqbot, channelId: string, key: string, value: string) {
@@ -229,5 +274,7 @@ export enum ResCode {
     INVALID_VALUE,
     INVALID_RANGE,
     END,
+    BLACKLISTED,
+    GLOBAL_BL,
     ERROR
 }

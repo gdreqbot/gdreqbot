@@ -16,5 +16,5 @@ export interface LevelData {
     name: string;
     creator: string;
     id: string;
-    user: User;
+    user?: User;
 }

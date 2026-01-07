@@ -4,7 +4,8 @@ export const defaultValues: Settings = {
     req_enabled: true,
     prefix: "!",
     max_levels_per_user: -1,
-    max_queue_size: -1
+    max_queue_size: -1,
+    random_queue: false
 }
 
 export interface Settings {
@@ -14,4 +15,5 @@ export interface Settings {
     prefix?: string;
     max_levels_per_user?: number;
     max_queue_size?: number;
+    random_queue?: boolean;
 }

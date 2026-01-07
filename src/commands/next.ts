@@ -31,7 +31,7 @@ export = class NextCommand extends BaseCommand {
             }
 
             case ResCode.OK: {
-                client.say(channel, `PogChamp Next level: '${res.level.name}' (${res.level.id}) by ${res.level.creator}`, { replyTo: msg });
+                client.say(channel, `PogChamp Next ${res.random ? "random " : ""}level: '${res.level.name}' (${res.level.id}) by ${res.level.creator}`, { replyTo: msg });
                 break;
             }
         }

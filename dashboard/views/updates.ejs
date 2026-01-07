@@ -1,25 +1,36 @@
 <%- include('components/header') %>
     <section class="section">
         <div class="container">
-            <h1 class="title">Changelogs gdreqbot v2.0</h1>
+            <h1 class="title">gdreqbot Update v3.0</h1>
             <hr>
             <ul>
                 <li>
-                    <p class="title is-5">• Added a dashboard to manage settings and command permissions</p>
-                    <p class="subtitle is-6">You can access it from the <a href="/"><strong>Home</strong></a> page, or by clicking on the button on the top right of this page.</p>
-                    <p>(Note: the !set command remains available as well)</p>
+                    <p class="title is-5">• Blacklist updates</p>
+                    <p>• Added a level blacklist alongside the existing user blacklist.</p>
+                    <p>• The blacklist is now also available in the <a href="/dashboard">Dashboard</a>.</p>
+                    <p>• Added a global user and level blacklist. Report any users and levels on <a href="https://discord.gg/gzeKZJnB2B">Discord</a>.</p>
                 </li>
+                <br></br>
+                <li>
+                    <p class="title is-5">• Website updates</p>
+                    <p class="subtitle is-6">The website isn't in a WIP state anymore, all pages that were WIP have been completed:</p>
+                    <p>• Added a full extensive list of <a href="/commands">Commands</a></p>
+                    <p>• Added nerd <a href="/stats">Stats</a>.</p>
+                    <p>• Added <a href="/terms-of-service">Terms of Service</a> and <a href="/privacy-policy">Privacy Policy</a>. Please read them carefully as using gdreqbot from now on results in agreeing to these terms.</p>
+                    <p>• Updated the <a href="/">Home</a> page with a better tutorial.</p>
+                </li>
+                <br></br>
+                <li>
+                    <p class="title is-5">• Added Random Queue</p>
+                    <p class="subtitle is-6">You can toggle it with the <strong>!random</strong> command. When random queue is enabled, typing <strong>!next</strong> will pick a random level from the queue.</p>
                 <br>
                 <li>
-                    <p class="title is-5">• Added a prefix setting</p>
-                    <p class="subtitle is-6">Now you can set a custom prefix to use for calling commands</p>
-                </li>
-                <br>
-                <li>
-                    <p class="title is-5">• Added a FAQ page and "News & Updates"</p>
-                    <p class="subtitle is-6">If you're having an issue, the <a href="/faq"><strong>FAQ</strong></a> page is the first thing you should head to. As for this page, it will always include the changelog of the latest update, and occasional important news.</p>
+                    <p class="title is-5">• Added !swap command</p>
+                    <p class="subtitle is-6">Available to moderators and up by default, it allows to swap the position of two levels in the queue.</p>
                 </li>
             </ul>
+            <hr>
+            <p class="subtitle">You can check out the full updates history <a href="/versions">here</a>.</p>
         </div>
     </section>
 <%- include('components/footer') %>

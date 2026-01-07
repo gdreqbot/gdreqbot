@@ -3,16 +3,16 @@ import BaseCommand from "../structs/BaseCommand";
 import { ChatMessage } from "@twurple/chat";
 import PermLevels from "../structs/PermLevels";
 import { Blacklist } from "../datasets/blacklist";
-import * as twitch from "../apis/twitch";
-import { User } from "../structs/user";
+import { getUser } from "../apis/twitch";
+import { getLevel } from "../apis/gd";
 
 export = class BlacklistCommand extends BaseCommand {
     constructor() {
         super({
             name: "blacklist",
-            description: "Manage blacklisted users (prevented from using the bot)",
-            args: "add|remove|list|clear [<user>]",
-            aliases: ["bl"],
+            description: "Manage blacklisted users or levels",
+            args: "user|level add|remove|list|clear [<arg>]",
+            aliases: ["bl", "blist"],
             enabled: true,
             permLevel: PermLevels.MOD
         });
@@ -21,78 +21,111 @@ export = class BlacklistCommand extends BaseCommand {
     async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[]): Promise<any> {
         let blacklist: Blacklist = client.db.load("blacklist", { channelId: msg.channelId });
 
-        if (!args.length || (!["add", "remove", "clear", "list"].includes(args[0]))) return client.say(channel, "You must select a valid action (add|remove|list|clear)", { replyTo: msg });
-        if (!args[1] && (!["clear", "list"].includes(args[0]))) return client.say(channel, "You must specify a user.", { replyTo: msg });
+        if (!args.length || (!["user", "level"].includes(args[0]))) return client.say(channel, "Select a valid blacklist (user or level)", { replyTo: msg });
+        if (!["add", "remove", "clear", "list"].includes(args[1])) return client.say(channel, "Select a valid action (add|remove|list|clear)", { replyTo: msg });
+        if (!args[2] && (!["clear", "list"].includes(args[1]))) return client.say(channel, `Specify a ${args[0]}.`, { replyTo: msg });
 
-        switch (args[0]) {
+        switch (args[1]) {
             case "add": {
-                let userName = args[1].replace(/\s*@\s*/g, '').toLowerCase();
-                let rawUser = await twitch.getUser(userName, "login");
+                let query = args[0] == "user" ? args[2].replace(/\s*@\s*/g, '').toLowerCase() : args[2];
+                let rawData = args[0] == "user" ? await getUser(query, "login") : await getLevel(query);
 
-                if (!rawUser) return client.say(channel, "An error occurred fetching user data. Please try again.", { replyTo: msg });
-                else if (!rawUser.data.length) return client.say(channel, "That user doesn't exist.", { replyTo: msg });
+                if (!rawData) return client.say(channel, `An error occurred fetching ${args[0]} data. Please try again.`, { replyTo: msg });
+                else if (args[0] == "user" ? !rawData.data.length : rawData == "-1") return client.say(channel, `That ${args[0]} doesn't exist.`, { replyTo: msg });
 
-                let user: User = {
-                    userId: rawUser.data[0].id,
-                    userName: rawUser.data[0].login
-                };
+                let data: any;
+                let str: string;
+                if (args[0] == "user") {
+                    data = {
+                        userId: rawData.data[0].id,
+                        userName: rawData.data[0].login
+                    };
+                    if (blacklist.users.some(u => u.userId == data.userId)) return client.say(channel, "That user is already blacklisted.", { replyTo: msg });
 
-                if (blacklist.users.some(u => u.userId == user.userId)) return client.say(channel, "That user is already blacklisted.", { replyTo: msg });
+                    blacklist.users.push(data);
+                    str = data.userName;
+                } else {
+                    data = client.req.parseLevel(rawData);
+                    if (blacklist.levels?.some(l => l.id == data.id)) return client.say(channel, "That level is already blacklisted.", { replyTo: msg });
 
-                blacklist.users.push(user);
-                await client.db.save("blacklist", { channelId: msg.channelId }, { users: blacklist.users });
+                    blacklist.levels ? blacklist.levels.push(data) : blacklist.levels = [data];
+                    str = `'${data.name}' (${data.id}) by ${data.creator}`;
+                }
 
-                client.say(channel, `Added ${userName} to the blacklist.`, { replyTo: msg });
+                await client.db.save("blacklist", { channelId: msg.channelId }, blacklist);
+                client.say(channel, `Added ${str} to the ${args[0]} blacklist.`, { replyTo: msg });
                 break;
             }
 
             case "remove": {
-                let userName = args[1].replace(/\s*@\s*/g, '').toLowerCase();
-                let rawUser = await twitch.getUser(userName, "login");
+                let query = args[0] == "user" ? args[2].replace(/\s*@\s*/g, '').toLowerCase() : args[2];
+                let rawData = args[0] == "user" ? await getUser(query, "login") : await getLevel(query);
 
-                if (!rawUser) return client.say(channel, "An error occurred fetching user data. Please try again.", { replyTo: msg });
-                else if (!rawUser.data.length) return client.say(channel, "That user doesn't exist.", { replyTo: msg });
+                if (!rawData) return client.say(channel, `An error occurred fetching ${args[0]} data. Please try again.`, { replyTo: msg });
+                else if (args[0] == "user" ? !rawData.data.length : rawData == "-1") return client.say(channel, `That ${args[0]} doesn't exist.`, { replyTo: msg });
 
-                let idx = blacklist.users.findIndex(u => u.userId == rawUser.data[0].id);
-                if (idx == -1) return client.say(channel, "That user isn't blacklisted.", { replyTo: msg });
+                let idx: number;
+                let data: any;
+                let str: string;
 
-                blacklist.users.splice(idx, 1);
-                await client.db.save("blacklist", { channelId: msg.channelId }, { users: blacklist.users });
+                if (args[0] == "user") {
+                    data = {
+                        userId: rawData.data[0].id,
+                        userName: rawData.data[0].login
+                    };
 
-                client.say(channel, `Removed ${userName} from the blacklist.`, { replyTo: msg });
+                    idx = blacklist.users.findIndex(u => u.userId == data.userId);
+                    if (idx == -1) return client.say(channel, "That user isn't blacklisted.", { replyTo: msg });
+
+                    blacklist.users.splice(idx, 1);
+                    str = data.userName;
+                } else {
+                    data = client.req.parseLevel(rawData);
+
+                    idx = blacklist.levels?.findIndex(l => l.id == data.id);
+                    if (idx == -1) return client.say(channel, "That level isn't blacklisted.", { replyTo: msg });
+
+                    blacklist.levels.splice(idx, 1);
+                    str = `'${data.name}' (${data.id}) by ${data.creator}`;
+                }
+
+                await client.db.save("blacklist", { channelId: msg.channelId }, blacklist);
+                client.say(channel, `Removed ${str} from the ${args[0]} blacklist.`, { replyTo: msg });
                 break;
             }
 
             case "clear": {
-                await client.db.save("blacklist", { channelId: msg.channelId }, { users: [] });
+                await client.db.save("blacklist", { channelId: msg.channelId }, args[0] == "user" ? { users: [] } : { levels: [] });
 
-                client.say(channel, "Cleared the blacklist.", { replyTo: msg });
+                client.say(channel, `Cleared the ${args[0]} blacklist.`, { replyTo: msg });
                 break;
             }
 
             case "list": {
-                let page = parseInt(args[1]);
-                if (args[1] && isNaN(page))
+                let page = parseInt(args[2]);
+                if (args[2] && isNaN(page))
                     return client.say(channel, "Kappa Sir that's not a number.", { replyTo: msg });
 
-                if (!blacklist.users.length) return client.say(channel, "The blacklist is empty.", { replyTo: msg });
+                let bl = args[0] == "user" ? blacklist.users : blacklist.levels;
+
+                if (!bl?.length) return client.say(channel, `The ${args[0]} blacklist is empty.`, { replyTo: msg });
 
                 let pages = [];
                 let done = false;
                 let start = 0;
-                let end = blacklist.users.length >= 10 ? 10 : blacklist.users.length;
+                let end = bl.length >= 10 ? 10 : bl.length;
                 let pos = 0;
 
                 while (!done) {
-                    let list = blacklist.users.slice(start, end);
+                    let list = bl.slice(start, end);
                     if (!list.length) {
                         done = true;
                         break;
                     }
 
-                    pages.push(list.map(l => {
+                    pages.push(list.map((l: any) => {
                         pos++;
-                        return l.userName;
+                        return args[0] == "user" ? l.userName : `'${l.name}' (${l.id})`;
                     }));
 
                     start += 10;
@@ -104,7 +137,7 @@ export = class BlacklistCommand extends BaseCommand {
                 if (page > pages.length)
                     return client.say(channel, "Kappa There aren't that many pages.", { replyTo: msg });
 
-                client.say(channel, `Page ${page || "1"} of ${pages.length} (${blacklist.users.length} users) | ${pages[page ? page-1 : 0].join(", ")}`, { replyTo: msg });
+                client.say(channel, `Page ${page || "1"} of ${pages.length} (${bl.length} ${args[0]}s) | ${pages[page ? page-1 : 0].join(" - ")}`, { replyTo: msg });
                 break;
             }
         }

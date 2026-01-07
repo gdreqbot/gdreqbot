@@ -12,7 +12,52 @@
                 </button>
             </form>
             <br>
-            <p class="subtitle">WIP</p>
+            <p class="subtitle">The following is an extensive list of all commands and their default properties:</p>
+            <div class="has-text-info">
+                <span class="icon">
+                    <i class="fas fa-info-circle"></i>
+                </span>
+                <span>Args naming convention:</span>
+                <ul style="margin-left: 30px">
+                    <li>• &ltarg&gt = replace with the actual argument</li>
+                    <li>• [&ltarg&gt] = optional argument / optional depending on the selected option</li>
+                    <li>• arg|arg = options to type as they are</li>
+                </ul>
+            </div>
+            <br>
+            <div class="box">
+                <% cmds.forEach(cmd => { %>
+                    <p class="title is-5"><%= "!" + cmd.name %></p>
+                    <p><strong>Description:</strong> <%= cmd.desc %></p>
+                    <p><strong>Args:</strong> <% if (cmd.args.length) { %><code class="has-text-primary"><%= cmd.args %></code> <% } else { %> <i>none</i> <% } %></p>
+                    <p><strong>Aliases:</strong><% if (!cmd.aliases.length) { %> <i>none</i><% } %></p>
+                    <% if (cmd.aliases.length) { %>
+                        <ul>
+                        <% cmd.aliases.forEach(a => { %>
+                            <li style="margin-left: 10px">• <%= "!" + a %></li>
+                        <% }); %>
+                        </ul>
+                    <% } %>
+                    <p><strong>Default required permission:</strong> <span class="has-text-primary"><%= cmd.permLevel %></span></p>
+                    <br>
+                    <p><strong>Supports Privilege mode*:</strong>
+                    <% if (cmd.supportsPrivilege) { %>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check"></i>
+                        </span>
+                    </p>
+                    <p><strong>Privilege Description:</strong> <%= cmd.privilegeDesc %></p>
+                    <p><strong>Privilege Args:</strong> <% if (cmd.privilegeArgs.length) { %><code class="has-text-primary"><%= cmd.privilegeArgs %></code> <% } else { %> <i>none</i> <% } %></p>
+                    <% } else { %>
+                        <span class="icon has-text-danger">
+                            <i class="fas fa-times"></i>
+                        </span>
+                    </p>
+                    <% } %>
+                    <hr>
+                <% }); %>
+            </div>
+            <p>* Privilege mode is a unique feature that allows users with access to the !privilege command to run certain commands in a special mode that allows performing more actions</p>
         </div>
     </section>
 <%- include('components/footer') %>

@@ -3,21 +3,25 @@ dotenv.config({ quiet: true });
 
 import express, { NextFunction, Request, Response } from "express";
 import session from "express-session";
-import passport, { serializeUser } from "passport";
+import passport from "passport";
 import { Strategy as twitchStrategy } from "passport-twitch-latest";
 import bodyParser from "body-parser";
 import { v4 as uuid } from "uuid";
 import path from 'path';
 import multer from "multer";
-import querystring from "querystring";
-import superagent, { PUT } from "superagent";
+import moment from "moment";
+import "moment-duration-format";
+import fs from "fs";
 import Gdreqbot, { channelsdb } from './core';
-import { getUserByToken } from "./apis/twitch";
 import { User } from "./structs/user";
 import { Settings } from "./datasets/settings";
-import { Perm, Perms } from "./datasets/perms";
+import { Perm } from "./datasets/perms";
 import PermLevels from "./structs/PermLevels";
 import BaseCommand from "./structs/BaseCommand";
+import { Blacklist } from "./datasets/blacklist";
+import { getUser } from "./apis/twitch";
+import { LevelData } from "./datasets/levels";
+import { getLevel } from "./apis/gd";
 
 const server = express();
 const port = process.env.PORT || 80;
@@ -54,6 +58,12 @@ export = class {
             }, async (accessToken, refreshToken, profile, done) => {
                 let channelName = profile.login;
                 let channelId = profile.id;
+
+                let bl: string[] = client.blacklist.get("users");
+                if (bl?.includes(channelId)) {
+                    client.logger.warn(`Blacklisted user tried to auth: ${channelName} (${channelId})`);
+                    return done(null, false);
+                }
 
                 let channels: User[] = channelsdb.get("channels");
                 let channel: User = channels.find(c => c.userId == channelId);
@@ -116,6 +126,7 @@ export = class {
                 state: redirectTo as string
             })(req, res, next);
         });
+
         server.get('/auth/callback', passport.authenticate('twitch', {
             failureRedirect: '/auth/error'
         }), (req, res) => {
@@ -138,11 +149,51 @@ export = class {
         });
 
         server.get('/stats', (req, res) => {
-            renderView(req, res, 'stats');
+            let memUsage = `${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB`;
+            let dbUsage = `${((fs.statSync('./data/data.db').size) / 1024).toFixed(2)} KB`;
+            let joined = channelsdb.get("channels").length;
+            let uptime = moment.duration(process.uptime() * 1000).format(" D [days], H [hrs], m [mins], s [secs]");
+            let twVersion = (require('../package.json').dependencies["@twurple/chat"]).substr(1);
+            let exprVersion = (require('../package.json').dependencies["express"]).substr(1);
+            let nodeVersion = process.version;
+            let pkgVersion = require('../package.json').version;
+
+            let totalReq = 0;
+            channelsdb.get("channels").forEach((channel: User) => {
+                let data: LevelData[] = client.db.load("levels", { channelId: channel.userId }).levels;
+                data.forEach(() => totalReq++);
+            });
+
+            res.render('stats', {
+                memUsage,
+                dbUsage,
+                joined,
+                uptime,
+                twVersion,
+                exprVersion,
+                nodeVersion,
+                pkgVersion,
+                totalReq
+            });
         });
 
         server.get('/commands', (req, res) => {
-            renderView(req, res, 'commands');
+            res.render('commands', {
+                cmds: client.commands.values()
+                    .filter(cmd => cmd.config.permLevel < PermLevels.DEV)
+                    .map(cmd => {
+                        return {
+                            name: cmd.config.name,
+                            desc: cmd.config.description,
+                            args: cmd.config.args,
+                            aliases: cmd.config.aliases,
+                            permLevel: this.normalize(PermLevels[cmd.config.permLevel]),
+                            supportsPrivilege: cmd.config.supportsPrivilege,
+                            privilegeDesc: cmd.config.privilegeDesc,
+                            privilegeArgs: cmd.config.privilegeArgs
+                        };
+                })
+            });
         });
 
         server.get('/terms-of-service', (req, res) => {
@@ -159,6 +210,10 @@ export = class {
 
         server.get('/updates', (req, res) => {
             renderView(req, res, 'updates');
+        });
+
+        server.get('/versions', (req, res) => {
+            renderView(req, res, 'versions');
         });
 
         server.get('/dashboard', (req, res) => {
@@ -179,6 +234,7 @@ export = class {
 
             let sets: Settings = client.db.load("settings", { channelId: userId });
             let perms: Perm[] = client.db.load("perms", { channelId: userId }).perms;
+            let bl: Blacklist = client.db.load("blacklist", { channelId: userId });
 
             let cmdData: any = [];
             let setData: any = this.getSettings(sets);
@@ -207,7 +263,8 @@ export = class {
                 user: req.user,
                 setData,
                 cmdData,
-                perms: permLiterals.map(p => this.normalize(p))
+                perms: permLiterals.map(p => this.normalize(p)),
+                bl
             });
         });
 
@@ -247,6 +304,123 @@ export = class {
 
                     await client.db.save("perms", { channelId: userId }, { perms });
                     client.logger.log(`Dashboard: updated perms for channel: ${userName}`);
+                    break;
+                }
+
+                case "blacklist-users": {
+                    let userBl: User[] = client.db.load("blacklist", { channelId: userId }).users;
+                    let invalid: string[] = [];
+
+                    switch (req.body.action) {
+                        case "add": {
+                            let users = req.body.users.split(",").map((u: string) => u.trim()).filter(Boolean);
+                            let hasInvalid = false;
+
+                            for (let i = 0; i < users.length; i++) {
+                                let raw = await getUser(users[i], "login");
+                                if (!raw?.data.length) {
+                                    invalid.push(users[i]);
+                                    hasInvalid = true;
+                                    continue;
+                                }
+
+                                if (hasInvalid)
+                                    continue;
+
+                                let data = {
+                                    userId: raw.data[0].id,
+                                    userName: raw.data[0].login
+                                };
+
+                                if (!userBl.find(u => u.userId == data.userId))
+                                    userBl.push(data);
+                            }
+
+                            break;
+                        }
+
+                        case "remove": {
+                            let idx = userBl.findIndex(u => u.userId == req.body.id);
+                            if (idx == -1) return res.status(200).json({ success: true });
+
+                            userBl.splice(idx, 1);
+                            break;
+                        }
+
+                        case "clear": {
+                            userBl = [];
+                            break;
+                        }
+                    }
+
+                    await client.db.save("blacklist", { channelId: userId }, { users: userBl });
+
+                    if (invalid.length > 0) {
+                        res.status(400).json({
+                            success: false,
+                            invalid,
+                        });
+                    } else {
+                        client.logger.log(`Dashboard: updated user blacklist for channel: ${userName}`);
+                        res.status(200).json({ success: true });
+                    }
+                    break;
+                }
+
+                case "blacklist-levels": {
+                    let levelBl: LevelData[] = client.db.load("blacklist", { channelId: userId }).levels;
+                    let invalid: string[] = [];
+
+                    switch (req.body.action) {
+                        case "add": {
+                            let levels = req.body.levels.split(",").map((u: string) => u.trim()).filter(Boolean);
+                            let hasInvalid = false;
+
+                            for (let i = 0; i < levels.length; i++) {
+                                let raw = await getLevel(levels[i]);
+                                if (raw == "-1") {
+                                    invalid.push(levels[i]);
+                                    hasInvalid = true;
+                                    continue;
+                                }
+
+                                if (hasInvalid)
+                                    continue;
+
+                                let data = client.req.parseLevel(raw);
+
+                                if (!levelBl.find(l => l.id == data.id))
+                                    levelBl.push(data);
+                            }
+
+                            break;
+                        }
+
+                        case "remove": {
+                            let idx = levelBl.findIndex(l => l.id == req.body.id);
+                            if (idx == -1) return res.status(200).json({ success: true });
+
+                            levelBl.splice(idx, 1);
+                            break;
+                        }
+
+                        case "clear": {
+                            levelBl = [];
+                            break;
+                        }
+                    }
+
+                    await client.db.save("blacklist", { channelId: userId }, { levels: levelBl });
+
+                    if (invalid.length > 0) {
+                        res.status(400).json({
+                            success: false,
+                            invalid,
+                        });
+                    } else {
+                        client.logger.log(`Dashboard: updated level blacklist for channel: ${userName}`);
+                        res.status(200).json({ success: true });
+                    }
                     break;
                 }
 

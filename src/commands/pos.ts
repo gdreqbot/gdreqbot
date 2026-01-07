@@ -3,6 +3,7 @@ import BaseCommand from "../structs/BaseCommand";
 import { ResCode } from "../modules/Request";
 import { ChatMessage } from "@twurple/chat";
 import { LevelData } from "../datasets/levels";
+import { Settings } from "../datasets/settings";
 
 export = class PosCommand extends BaseCommand {
     constructor() {
@@ -18,6 +19,8 @@ export = class PosCommand extends BaseCommand {
 
     async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[]): Promise<any> {
         let levels: LevelData[] = client.db.load("levels", { channelId: msg.channelId }).levels;
+        let sets: Settings = client.db.load("settings", { channelId: msg.channelId });
+
         let query = "";
         if (args[0]) {
             query = args.join(" ");
@@ -43,7 +46,7 @@ export = class PosCommand extends BaseCommand {
             }
 
             case ResCode.OK: {
-                client.say(channel, `${args[0] ? `'${res.level.name}'` : `Your level (${res.level.name})`} is at position ${res.lvlPos} in the queue.`, { replyTo: msg });
+                client.say(channel, `${args[0] ? `'${res.level.name}'` : `Your level (${res.level.name})`} is at position ${res.pos+1} in the queue.${sets.random_queue ? " [RANDOM ORDER]" : ""}`, { replyTo: msg });
                 break;
             }
         }

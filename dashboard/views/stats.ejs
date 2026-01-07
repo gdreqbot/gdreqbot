@@ -12,7 +12,18 @@
                 </button>
             </form>
             <br>
-            <p class="subtitle">WIP</p>
+            <p class="subtitle">Some nerd bot stats:</p>
+            <div class="box">
+                <p>Channels joined: <code class="has-text-primary"><%= joined %></code></p>
+                <p>Total pending level requests: <code class="has-text-primary"><%= totalReq %></code></p>
+                <p>Running for: <code class="has-text-primary"><%= uptime %></code></p>
+                <p>Memory usage: <code class="has-text-primary"><%= memUsage %></code></p>
+                <p>Database usage: <code class="has-text-primary"><%= dbUsage %></code></p>
+                <p>Twurple API version: <code class="has-text-primary"><%= twVersion %></code></p>
+                <p>Express version: <code class="has-text-primary"><%= exprVersion %></code></p>
+                <p>Node.js version: <code class="has-text-primary"><%= nodeVersion %></code></p>
+                <p>gdreqbot (package.json) version: <code class="has-text-primary"><%= pkgVersion %></code></p>
+            </div>
         </div>
     </section>
 <%- include('components/footer') %>

@@ -3,6 +3,7 @@ import Gdreqbot from "../core";
 import { ResCode } from "../modules/Request";
 import BaseCommand from "../structs/BaseCommand";
 import { LevelData } from "../datasets/levels";
+import { Settings } from "../datasets/settings";
 
 export = class ListCommand extends BaseCommand {
     constructor() {
@@ -18,6 +19,8 @@ export = class ListCommand extends BaseCommand {
 
     async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[]): Promise<any> {
         let levels: LevelData[] = client.db.load("levels", { channelId: msg.channelId }).levels;
+        let sets: Settings = client.db.load("settings", { channelId: msg.channelId });
+
         let page = parseInt(args[0]);
         if (args[0] && isNaN(page))
             return client.say(channel, "Kappa Sir that's not a number.", { replyTo: msg });
@@ -36,7 +39,7 @@ export = class ListCommand extends BaseCommand {
             }
 
             case ResCode.OK: {
-                client.say(channel, `Page ${page || "1"} of ${res.pages} (${levels.length} levels) | ${res.page.map(l => `${l.pos}. ${l.name} (${l.id})`).join(" - ")}`, { replyTo: msg });
+                client.say(channel, `${sets.random_queue ? "[RANDOM ORDER] " : ""}Page ${page || "1"} of ${res.pages} (${levels.length} levels) | ${res.page.map(l => `${l.pos}. ${l.name} (${l.id})`).join(" - ")}`, { replyTo: msg });
                 break;
             }
         }
