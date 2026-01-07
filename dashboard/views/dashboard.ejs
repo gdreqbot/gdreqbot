@@ -115,7 +115,7 @@
                     <input type="hidden" name="formType" value="settings">
                     <div>
                         <p class="title is-5">Prefix</p>
-                        <p class="subtitle is-6">The prefix used to call commands</p>
+                        <p class="subtitle is-6">The prefix used to call commands (should be a symbol or a character)</p>
                         <div class="input-container">
                             <input class="input" type="text" value="<%= setData.prefix.value %>" name="prefix" id="required" data-default="<%= setData.prefix.defaultValue %>" required>
                             <button class="button reset" type="button" <% if (setData.prefix.isDefault) { %> disabled <% } %>>Reset</button>
