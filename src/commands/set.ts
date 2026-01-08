@@ -21,7 +21,7 @@ export = class SetCommand extends BaseCommand {
         let sets: Settings = client.db.load("settings", { channelId: msg.channelId });
 
         if (!args?.length)
-            return client.say(channel, `Settings: ${Object.entries(sets).slice(2).map(s => `${s[0]}:${s[1]}`).join(" - ")}`);
+            return client.say(channel, `Settings: ${Object.entries(sets).slice(2).filter(s => s[0] != "first_time").map(s => `${s[0]}:${s[1]}`).join(" - ")}`);
 
         let res = await client.req.set(client, msg.channelId, args[0], args[1]);
 

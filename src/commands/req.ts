@@ -45,7 +45,7 @@ export = class ReqCommand extends BaseCommand {
             }
 
             case ResCode.DISABLED: {
-                client.say(channel, "Kappa Requests are disabled.", { replyTo: msg });
+                client.say(channel, `Kappa Requests are disabled.${sets.first_time ? ` (use ${sets.prefix ?? client.config.prefix}toggle to enable them)` : ""}`, { replyTo: msg });
                 break;
             }
 
