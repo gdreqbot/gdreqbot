@@ -106,19 +106,11 @@ client.onJoinFailure(async (channel, reason) => {
 
     let channelId = channels[idx].userId;
 
-    switch (reason) {
-        case "msg_banned": {
-            await client.db.deleteAll({ channelId, channelName: channel });
+    await client.db.deleteAll({ channelId, channelName: channel });
 
-            channels.splice(idx, 1);
-            await channelsdb.set("channels", channels);
-            client.logger.log(`←   Channel left: ${channel} (banned)`);
-            break;
-        }
-
-        default:
-            break;
-    }
+    channels.splice(idx, 1);
+    await channelsdb.set("channels", channels);
+    client.logger.log(`←   Channel left: ${channel} (${reason})`);
 });
 
 client.onMessage(async (channel, user, text, msg) => {
