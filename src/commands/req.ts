@@ -11,7 +11,7 @@ export = class ReqCommand extends BaseCommand {
             description: "Request a level by name or ID",
             category: "requests",
             args: "<query>",
-            aliases: ["r", "request", "add"],
+            aliases: ["r", "request", "add", "join"],
             enabled: true
         });
     }

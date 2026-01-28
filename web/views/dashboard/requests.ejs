@@ -116,6 +116,18 @@
                 align-items: center;
                 justify-content: center;
             }
+            .has-tooltip-arrow:hover:before,
+            .has-tooltip-arrow:hover:after {
+                transition-delay: 0.5s;
+            }
+            .has-tooltip-arrow:before,
+            .has-tooltip-arrow:after {
+                transition-delay: 0s;
+            }
+            .has-tooltip-arrow:hover:before {
+                max-width: none;
+                white-space: nowrap;
+            }
         </style>
         <section class="section">
             <div class="container">
@@ -140,28 +152,39 @@
                 <% } %>
                 <hr>
                 <div class="container">
-                    <div class="box panel">
+                    <div class="box panel" style="cursor: default">
                         <div>
                             <p class="subtitle">
                                 <span class="icon has-text-info" style="margin-right: 5px">
                                     <i class="fas fa-envelope"></i>
                                 </span>
-                                Requests: <strong class="has-text-success">ON</strong>
+                                Requests: 
+                                <% if (sets.req_enabled) { %>
+                                <strong class="has-text-success" style="margin-right: 10px">ON</strong>
                                 <button class="icon-button toggle-on toggle-requests" style="float: right; margin-left: 20px">
                                     <span class="icon">
                                         <i class="fas fa-toggle-on"></i>
                                     </span>
                                 </button>
+                                <% } else { %>
+                                <strong class="has-text-danger">OFF</strong>
+                                <button class="icon-button toggle-off toggle-requests" style="float: right; margin-left: 20px">
+                                    <span class="icon">
+                                        <i class="fas fa-toggle-off"></i>
+                                    </span>
+                                </button>
+                                <% } %>
                             </p>
                         </div>
                     </div>
-                    <div class="box panel">
+                    <% if (sets.random_queue) { %>
+                    <div class="box panel has-tooltip-arrow" data-tooltip="Clicking Next will pick a random level from the queue" aria-label="Clicking Next will pick a random level from the queue" style="cursor: default">
                         <div>
                             <p class="subtitle">
                                 <span class="icon has-text-danger" style="margin-right: 5px">
-                                        <i class="fas fa-dice"></i>
+                                        <i class="fas fa-random"></i>
                                 </span>
-                                Random Queue: <strong class="has-text-success">ON</strong>
+                                Random Queue: <strong class="has-text-success" style="margin-right: 10px">ON</strong>
                                 <button class="icon-button toggle-on toggle-requests" style="float: right; margin-left: 20px">
                                     <span class="icon">
                                         <i class="fas fa-toggle-on"></i>
@@ -170,13 +193,31 @@
                             </p>
                         </div>
                     </div>
-                    <div class="box panel">
+                    <% } else { %>
+                    <div class="box panel has-tooltip-arrow" data-tooltip="The queue order is followed" aria-label="The queue order is followed" style="cursor: default">
+                        <div>
+                            <p class="subtitle">
+                                <span class="icon has-text-danger" style="margin-right: 5px">
+                                        <i class="fas fa-random"></i>
+                                </span>
+                                Random Queue: <strong class="has-text-danger">OFF</strong>
+                                <button class="icon-button toggle-off toggle-requests" style="float: right; margin-left: 20px">
+                                    <span class="icon">
+                                        <i class="fas fa-toggle-off"></i>
+                                    </span>
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                    <% } %>
+                    <% if (sets.silent_mode) { %>
+                    <div class="box panel has-tooltip-arrow" data-tooltip="The bot will not send any messages in chat" aria-label="The bot will not send any messages in chat" style="cursor: default">
                         <div>
                             <p class="subtitle">
                                 <span class="icon" style="margin-right: 5px">
                                         <i class="fas fa-volume-mute"></i>
                                 </span>
-                                Silent Mode: <strong class="has-text-success">ON</strong>
+                                Silent Mode: <strong class="has-text-success" style="margin-right: 10px">ON</strong>
                                 <button class="icon-button toggle-on toggle-requests" style="float: right; margin-left: 20px">
                                     <span class="icon">
                                         <i class="fas fa-toggle-on"></i>
@@ -185,6 +226,23 @@
                             </p>
                         </div>
                     </div>
+                    <% } else { %>
+                    <div class="box panel has-tooltip-arrow" data-tooltip="The bot will send messages as usual" aria-label="The bot will send messages as usual" style="cursor: default">
+                        <div>
+                            <p class="subtitle">
+                                <span class="icon" style="margin-right: 5px">
+                                        <i class="fas fa-volume-mute"></i>
+                                </span>
+                                Silent Mode: <strong class="has-text-danger">OFF</strong>
+                                <button class="icon-button toggle-off toggle-requests" style="float: right; margin-left: 20px">
+                                    <span class="icon">
+                                        <i class="fas fa-toggle-off"></i>
+                                    </span>
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                    <% } %>
                 </div>
             </div>
         </section>
@@ -192,22 +250,27 @@
 
         <section class="section">
             <div class="container">
-                <div class="button panel">
+                <div class="button panel <% if (levels.length > 0) { %>has-tooltip-arrow<% } %>" <% if (levels.length > 0) { %>data-tooltip="Clear Queue"<% } %> aria-label="Clear Queue" <% if (!levels.length) { %>disabled<% } %>>
                     <div>
-                        <button class="icon-button clear toggle-requests has-text-danger" style="margin-left: 5px; font-size: 24px">
+                        <button class="icon-button clear has-text-danger" style="margin-left: 5px; font-size: 24px; <% if (!levels.length) { %>cursor: not-allowed"<% } %>>
                             <span class="icon">
                                 <i class="fas fa-broom"></i>
                             </span>
                         </button>
                     </div>
                 </div>
-                <div class="button panel">
-                    <div>
-                        <button class="icon-button next toggle-requests has-text-link" style="margin-left: 5px">
-                            <span class="icon">
-                                <i class="fas fa-forward"></i>
-                            </span>
-                        </button>
+                <div class="button refresh panel has-tooltip-arrow" data-tooltip="Refresh" aria-label="Refresh" onclick="refresh()">
+                    <p class="icon-button has-text-primary" style="margin-left: 5px; font-size: 24px">
+                        <span class="icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </span>
+                    </p>
+                </div>
+                <div class="button next panel <% if (levels.length > 0) { %>has-tooltip-arrow<% } %>" <% if (levels.length > 0) { %>data-tooltip="Next Level"<% } %> aria-label="Next Level" <% if (!levels.length) { %>disabled<% } %>>
+                    <div class="icon-button has-text-link" style="margin-left: 5px; <% if (!levels.length) { %>cursor: not-allowed"<% } %>>
+                        <span class="icon">
+                            <i class="fas fa-forward"></i>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -215,27 +278,47 @@
 
         <section class="section">
             <div class="container">
-                <p class="title">Next Level</p>
+                <p class="title">
+                    <% if (sets.random_queue) { %>
+                    <span class="icon has-text-danger" style="margin-right: 5px">
+                        <i class="fas fa-random"></i>
+                    </span>
+                    <% } %>
+                    Next Level
+                </p>
                 <form class="box" id="next">
+                    <% if (levels.length) { %>
                     <div>
-                        <div>
-                            <div style="float: left">
-                                <p class="title is-5" style="float: left">Bloodbath (10565740)</p>
-                                <button class="button is-small has-text-info" type="button" style="float: right; margin-left: 20px">Copy ID</button>
-                            </div>
-                            <div style="float: right">
-                                <button class="button reset" type="button">Blacklist Sender</button>
-                            </div>
-                            <div style="float: right">
-                                <button class="button reset" type="button">Blacklist Level</button>
-                            </div>
-                            <br></br>
-                            <p><strong>By:</strong> Riot</p>
-                            <p><strong>Requested by:</strong> GalaxyVinci05</p>
-                            <p><strong>Notes:</strong> best lvl evr play rn</p>
+                        <div style="float: left">
+                            <p class="title is-5" style="float: left"><%= levels[0].name %> (<%= levels[0].id %>)</p>
+                            <button class="button is-small has-text-info" type="button" style="float: right; margin-left: 20px" onclick="copyToClipboard()">Copy ID</button>
                         </div>
+                        <div style="float: right">
+                            <button class="button reset" type="button">Blacklist Sender</button>
+                        </div>
+                        <div style="float: right">
+                            <button class="button reset" type="button">Blacklist Level</button>
+                        </div>
+                        <br></br>
+                        <p><strong>By:</strong> <%= levels[0].creator %></p>
+                        <p><strong>Requested by:</strong> <%= levels[0].user.userName %></p>
+                        <p><strong>Notes:</strong> <%= levels[0].notes ?? "none" %></p>
                     </div>
+                    <% } %>
                 </form>
+                <br>
+                <p class="title">Queue (<%= levels.length-1 %> levels)</p>
+                <div class="box">
+                    <ul>
+                        <% levels.slice(1).forEach((level, i) => { %>
+                        <li class="input-container">
+                            <p><%= i+1 %>. <%= level.name %> (<%= level.id %>)</p>
+                            <button class="button remove is-small" type="button" data-type="levels" data-id="<%= level.id %>">Remove</button>
+                        </li>
+                        <hr>
+                        <% }); %>
+                    </ul>
+                </div>
             </div>
         </section>
 
@@ -254,6 +337,16 @@
                     console.error(e);
                 }
             });
+
+            function copyToClipboard() {
+                navigator.clipboard.writeText("<%= levels[0].id %>");
+            }
+
+            function refresh() {
+                window.location.reload();
+            }
+
+            document.querySelector('.next').addEventListener('click', () => console.log("shish"))
         </script>
 <%- include('../components/footer') %>
 <%- include('components/sidebar') %>

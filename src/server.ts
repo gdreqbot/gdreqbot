@@ -240,7 +240,7 @@ export = class {
                 isAuthenticated: true,
                 user: req.user,
                 levels,
-                setData: this.getSettings(sets),
+                sets,
                 page: "req",
                 hide_note: sets.hide_note
             });
