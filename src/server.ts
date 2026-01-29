@@ -72,12 +72,12 @@ export = class {
 
                 await client.join(channelName);
 
-                if (!update) {
-                    updateUsers.push({ userId: channelId, userName: channelName });
-                    await updatedb.set("updateUsers", updateUsers);
-                }
-
                 if (!channel) {
+                    if (!update) {
+                        updateUsers.push({ userId: channelId, userName: channelName });
+                        await updatedb.set("updateUsers", updateUsers);
+                    }
+
                     // push to channels db
                     channels.push({ userId: channelId, userName: channelName });
                     
