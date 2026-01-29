@@ -23,12 +23,12 @@
     left: 0;
     width: 250px;
     height: calc(100vh - var(--navbar-height));
-    background-color: #0A0A0A;
+    background-color: var(--bulma-scheme-main);
 
     display: flex;
     flex-direction: column;
     transition: transform 0.25s ease, top 0.25s ease, height 0.25s ease;
-    filter: drop-shadow(8px 8px 7px black);
+    filter: drop-shadow(8px 8px 7px var(--bulma-scheme-main-ter));
 }
 
 .no-transition {

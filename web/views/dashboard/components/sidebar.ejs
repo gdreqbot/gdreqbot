@@ -8,20 +8,20 @@
         .sidebar .menu li a {
             text-decoration: none;
             padding: 10px;
+            background-color: var(--bulma-scheme-main);
         }
         .sidebar .menu li a:hover {
-            background-color: #121212;
+            background-color: var(--bulma-scheme-main-bis);
         }
         .sidebar .menu-label {
             padding-left: 20px;
         }
         .sidebar footer {
             padding: 20px;
-            color: #fff;
             word-wrap: break-word;
         }
         .sidebar .menu li a.is-active {
-            background-color: #1CA64C;
+            background-color: var(--bulma-success);
         }
     </style>
 
@@ -33,13 +33,13 @@
                     <span class="icon">
                         <i class="fas fa-arrow-right"></i>
                     </span>
-                    <span class="title is-6"><strong>Requests</strong></span>
+                    <span class="title is-6 <%= page == "req" ? "has-text-white-bis" : "" %>"><strong>Requests</strong></span>
                 </a></li>
                 <li><a href="/dashboard/<%= user.userId %>/configuration" class="<%= page == "set" ? "is-active" : "" %>">
                     <span class="icon">
                         <i class="fas fa-arrow-right"></i>
                     </span>
-                    <span class="title is-6"><strong>Configuration</strong></span>
+                    <span class="title is-6 <%= page == "set" ? "has-text-white-bis" : "" %>"><strong>Configuration</strong></span>
                 </a></li>
             </ul>
         </div>
@@ -80,7 +80,7 @@
             }
         }
 
-        handleResize();
+        //handleResize();
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {

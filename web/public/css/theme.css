@@ -1,0 +1,33 @@
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bulma-scheme-main: #0A0A0A;
+    --bulma-scheme-main-bis: #14161a;
+    --bulma-scheme-main-ter: #000000;
+    --bulma-hover: #14161A;
+
+    --bulma-text: #eaeaea;
+    --bulma-text-weak: #b5b5b5;
+    --bulma-text-strong: #ffffff;
+
+    --bulma-border: #1f1f1f;
+
+    --bulma-primary: #48C78E;
+    --bulma-success: #1CA64C;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bulma-scheme-main: #ffffff;
+    --bulma-scheme-main-bis: #f5f5f5;
+    --bulma-scheme-main-ter: #ededed;
+
+    --bulma-text: #363636;
+    --bulma-text-weak: #7a7a7a;
+    --bulma-text-strong: #000000;
+
+    --bulma-border: #dbdbdb;
+
+    --bulma-primary: #1ca64c;
+  }
+}
