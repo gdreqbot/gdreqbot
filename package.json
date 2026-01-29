@@ -1,6 +1,6 @@
 {
   "name": "gdreqbot",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Early stage Geometry Dash level requests",
   "main": "dist/core.js",
   "scripts": {
