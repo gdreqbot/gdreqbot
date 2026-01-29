@@ -72,12 +72,16 @@ export = class {
 
                 await client.join(channelName);
 
-                if (!channel || !update) {
+                if (!update) {
+                    updateUsers.push({ userId: channelId, userName: channelName });
+                    await updatedb.set("updateUsers", updateUsers);
+                }
+
+                if (!channel) {
                     // push to channels db
                     channels.push({ userId: channelId, userName: channelName });
-                    updateUsers.push({ userId: channelId, userName: channelName });
+                    
                     await channelsdb.set("channels", channels);
-                    await updatedb.set("updateUsers", updateUsers);
                     await client.db.setDefault({ channelId, channelName });
 
                     await client.say(channelName, "Thanks for adding gdreqbot! You can get a list of commands by typing !help");
