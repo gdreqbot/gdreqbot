@@ -301,8 +301,8 @@
                             </div>
                         </div>
                         <div class="right">
-                            <button class="button blacklist" type="button" data-type="level" <% if (bl.levels.find(l => l.id == levels[0].id)) { %>disabled<% } %>>Blacklist Level</button>
-                            <button class="button blacklist" type="button" data-type="user" <% if (bl.users.find(u => u.userId == levels[0].user.userId)) { %>disabled<% } %>>Blacklist Sender</button>
+                            <button class="button blacklist" type="button" data-type="level" <% if (bl.levels?.find(l => l.id == levels[0].id)) { %>disabled<% } %>>Blacklist Level</button>
+                            <button class="button blacklist" type="button" data-type="user" <% if (bl.users?.find(u => u.userId == levels[0].user.userId)) { %>disabled<% } %>>Blacklist Sender</button>
                         </div>
                     </div>
                     <p><strong>By:</strong> <%= levels[0].creator %></p>
