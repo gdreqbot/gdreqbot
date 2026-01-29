@@ -5,16 +5,17 @@ import { Settings } from "../datasets/settings";
 import * as gd from "../apis/gd";
 
 class Request {
-    parseLevel(raw: string, user?: User): LevelData {
+    parseLevel(raw: string, user?: User, notes?: string): LevelData {
         return {
             name: raw.split(":")[3],
             creator: raw.split("#")[1].split(":")[1],
             id: raw.split(":")[1],
-            user: user ?? null
+            user: user ?? null,
+            notes: notes ?? null
         };
     }
 
-    async addLevel(client: Gdreqbot, channelId: string, user: User, query: string) {
+    async addLevel(client: Gdreqbot, channelId: string, user: User, query: string, notes?: string) {
         let sets: Settings = client.db.load("settings", { channelId });
         let blacklisted: LevelData[] = client.db.load("blacklist", { channelId })?.levels;
         let bl: string[] = client.blacklist.get("levels");
@@ -26,7 +27,7 @@ class Request {
             if (!raw) return { status: ResCode.ERROR };
             else if (raw == "-1") return { status: ResCode.NOT_FOUND };
 
-            let newLvl = this.parseLevel(raw, user);
+            let newLvl = this.parseLevel(raw, user, notes);
             if (bl?.length && bl.includes(newLvl.id))
                 return { status: ResCode.GLOBAL_BL };
             else if (blacklisted?.find(l => l.id == newLvl.id))
@@ -192,18 +193,20 @@ class Request {
         return { status: ResCode.OK, page: pages[page ? page-1 : 0], pages: pages.length };
     }
 
-    async toggle(client: Gdreqbot, channelId: string) {
+    async toggle(client: Gdreqbot, channelId: string, type: "queue" | "random" | "silent") {
         let sets: Settings = client.db.load("settings", { channelId });
-        await client.db.save("settings", { channelId }, { req_enabled: !sets.req_enabled });
-
-        return !sets.req_enabled;
-    }
-
-    async toggleRandom(client: Gdreqbot, channelId: string) {
-        let sets: Settings = client.db.load("settings", { channelId });
-        await client.db.save("settings", { channelId }, { random_queue: !sets.random_queue });
-
-        return !sets.random_queue;
+        
+        switch (type) {
+            case "queue":
+                await client.db.save("settings", { channelId }, { req_enabled: !sets.req_enabled });
+                return !sets.req_enabled;
+            case "random":
+                await client.db.save("settings", { channelId }, { random_queue: !sets.random_queue });
+                return !sets.random_queue;
+            case "silent":
+                await client.db.save("settings", { channelId }, { silent_mode: !sets.silent_mode });
+                return !sets.silent_mode;
+        }
     }
 
     async set(client: Gdreqbot, channelId: string, key: string, value: string) {

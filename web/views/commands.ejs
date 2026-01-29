@@ -48,16 +48,27 @@
                     </p>
                     <p><strong>Privilege Description:</strong> <%= cmd.privilegeDesc %></p>
                     <p><strong>Privilege Args:</strong> <% if (cmd.privilegeArgs.length) { %><code class="has-text-primary"><%= cmd.privilegeArgs %></code> <% } else { %> <i>none</i> <% } %></p>
+                    <br>
                     <% } else { %>
                         <span class="icon has-text-danger">
                             <i class="fas fa-times"></i>
                         </span>
-                    </p>
+                    <% } %>
+                    <p><strong>Supports Silent mode**:</strong>
+                    <% if (cmd.supportsSilent) { %>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check"></i>
+                        </span>
+                    <% } else { %>
+                        <span class="icon has-text-danger">
+                            <i class="fas fa-times"></i>
+                        </span>
                     <% } %>
                     <hr>
                 <% }); %>
             </div>
-            <p>* Privilege mode is a unique feature that allows users with access to the !privilege command to run certain commands in a special mode that allows performing more actions</p>
+            <p>* <strong>Privilege mode</strong> is a unique feature that allows users with access to the <strong>!privilege</strong> command to run certain commands in a special mode that allows performing more actions</p>
+            <p>** Commands supporting <strong>Silent mode</strong> will work even if Silent mode is enabled, but they won't give any response in chat</p>
         </div>
     </section>
 <%- include('components/footer') %>

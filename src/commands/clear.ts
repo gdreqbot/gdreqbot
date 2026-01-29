@@ -12,21 +12,23 @@ export = class ClearCommand extends BaseCommand {
             category: "requests",
             aliases: ["purge"],
             enabled: true,
-            permLevel: PermLevels.MOD
+            permLevel: PermLevels.MOD,
+            supportsSilent: true
         });
     }
 
-    async run(client: Gdreqbot, msg: ChatMessage, channel: string): Promise<any> {
+    async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[], opts: { auto: boolean, silent: boolean }): Promise<any> {
         let res = await client.req.clear(client, msg.channelId);
+        let replyTo = opts.auto ? null : msg;
 
         switch (res.status) {
             case ResCode.EMPTY: {
-                client.say(channel, "Kappa The queue is empty.", { replyTo: msg });
+                client.say(channel, "Kappa The queue is empty.", { replyTo });
                 break;
             }
 
             case ResCode.OK: {
-                client.say(channel, `PogChamp Queue cleared.`, { replyTo: msg });
+                if (!opts.silent) client.say(channel, `PogChamp Queue cleared.`, { replyTo });
                 break;
             }
         }

@@ -19,7 +19,7 @@ export = class HelpCommand extends BaseCommand {
         });
     }
 
-    async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[], userPerms: PermLevels, privilegeMode: boolean): Promise<any> {
+    async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[], opts: { userPerms: PermLevels, privilegeMode: boolean }): Promise<any> {
         let cmd = client.commands.get(args[0])
             || client.commands.values().find(c => c.config.aliases.includes(args[0]));
 
@@ -29,25 +29,25 @@ export = class HelpCommand extends BaseCommand {
         let sets: Settings = client.db.load("settings", { channelId: msg.channelId });
         let str;
 
-        if (privilegeMode) {
+        if (opts.privilegeMode) {
             if (cmd) {
                 if (!cmd.config.supportsPrivilege)
                     return client.say(channel, "That command doesn't support privilege mode.", { replyTo: msg });
 
-                str = `${sets.prefix ?? client.config.prefix}pr ${cmd.config.name}: ${sets.prefix ? cmd.config.privilegeDesc.replace(client.config.prefix, sets.prefix) : cmd.config.privilegeDesc} | args: ${cmd.config.privilegeArgs ? `${sets.prefix ?? client.config.prefix}pr ${cmd.config.name} ${cmd.config.privilegeArgs}` : "none"}`;
+                str = `${sets.prefix ?? client.config.prefix}pr ${cmd.info.name}: ${sets.prefix ? cmd.info.privilegeDesc.replace(client.config.prefix, sets.prefix) : cmd.info.privilegeDesc} | args: ${cmd.info.privilegeArgs ? `${sets.prefix ?? client.config.prefix}pr ${cmd.info.name} ${cmd.info.privilegeArgs}` : "none"}`;
                 if (sets.prefix) str.replace(client.config.prefix, sets.prefix);
             } else {
-                str = `${sets.prefix ?? client.config.prefix}pr help <command> for more info | ${client.commands.values().filter(c => c.config.supportsPrivilege).map(c => `${sets.prefix?? client.config.prefix}pr ${c.config.name}`).toArray().join(sets.prefix == "-" ? " | " : " - ")}`
+                str = `${sets.prefix ?? client.config.prefix}pr help <command> for more info | ${client.commands.values().filter(c => c.config.supportsPrivilege).map(c => `${sets.prefix?? client.config.prefix}pr ${c.info.name}`).toArray().join(sets.prefix == "-" ? " | " : " - ")}`
             }
         } else {
             let perms: Perm[] = client.db.load("perms", { channelId: msg.channelId }).perms;
 
             if (cmd) {
-                let customPerm = perms?.find(p => p.cmd == cmd.config.name);
+                let customPerm = perms?.find(p => p.cmd == cmd.info.name);
 
-                str = `${sets.prefix ?? client.config.prefix}${cmd.config.name}: ${sets.prefix ? cmd.config.description.replace(client.config.prefix, sets.prefix) : cmd.config.description} | args: ${cmd.config.args ? `${sets.prefix ?? client.config.prefix}${cmd.config.name} ${cmd.config.args}` : "none"} | aliases: ${cmd.config.aliases?.join(", ") || "none"} | required perm: ${PermLevels[customPerm?.perm || cmd.config.permLevel]}`;
+                str = `${sets.prefix ?? client.config.prefix}${cmd.info.name}: ${sets.prefix ? cmd.info.description.replace(client.config.prefix, sets.prefix) : cmd.info.description} | args: ${cmd.info.args ? `${sets.prefix ?? client.config.prefix}${cmd.info.name} ${cmd.info.args}` : "none"} | aliases: ${cmd.config.aliases?.join(", ") || "none"} | required perm: ${PermLevels[customPerm?.perm || cmd.config.permLevel]}`;
             } else {
-                str = `${sets.prefix ?? client.config.prefix}help <command> for more info | ${client.commands.values().filter(c => (perms?.find(p => p.cmd == c.config.name)?.perm || c.config.permLevel) <= userPerms).map(c => `${sets.prefix ?? client.config.prefix}${c.config.name}`).toArray().join(sets.prefix == "-" ? " | " : " - ")}`;
+                str = `${sets.prefix ?? client.config.prefix}help <command> for more info | ${client.commands.values().filter(c => (perms?.find(p => p.cmd == c.info.name)?.perm || c.config.permLevel) <= opts.userPerms).map(c => `${sets.prefix ?? client.config.prefix}${c.info.name}`).toArray().join(sets.prefix == "-" ? " | " : " - ")}`;
             }
         }
 

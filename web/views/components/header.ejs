@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="/public/css/all.min.css">
     <link rel="stylesheet" href="/public/css/bulma-prefers-dark.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/bulma-tooltip.min.css">
+    <link rel="stylesheet" href="/public/css/layout.css">
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script>
@@ -35,7 +37,7 @@
     <title>gdreqbot</title>
 </head>
 <body>
-    <nav class="navbar is-success" role="navigation" aria-label="main navigation">
+    <nav class="navbar is-success is-fixed-top" role="navigation" aria-label="main navigation">
         <div class="navbar-brand">
             <a class="navbar-item" href="/">
                 <span class="icon">
@@ -106,5 +108,49 @@
             </div>
         </div>
     </nav>
+<br></br>
+<script>
+    let { body } = document;
+    let hidden = localStorage.getItem("navbar") == "hidden";
+
+    if (hidden) {
+        body.classList.add("navbar-hidden");
+    } else {
+        body.classList.remove("navbar-hidden");
+    }
+
+    window.addEventListener('load', () => {
+        if (window.scrollY == 0) {
+            body.classList.remove("navbar-hidden");
+            localStorage.setItem("navbar", "visible");
+        }
+    });
+
+    let step = false;
+
+    window.addEventListener("scroll", () => {
+        if (!step) {
+            window.requestAnimationFrame(() => {
+                let lastScroll = localStorage.getItem("lastScroll");
+                let scroll = window.scrollY;
+
+                if (scroll > lastScroll && scroll > 80 && !hidden) {
+                    hidden = true;
+                    body.classList.add("navbar-hidden");
+                    localStorage.setItem("navbar", "hidden");
+                } else if (scroll < lastScroll && hidden) {
+                    hidden = false;
+                    body.classList.remove("navbar-hidden");
+                    localStorage.setItem("navbar", "visible");
+                }
+
+                localStorage.setItem("lastScroll", scroll);
+                step = false;
+            });
+        }
+
+        step = true;
+    });
+</script>
 </body>
 </html>

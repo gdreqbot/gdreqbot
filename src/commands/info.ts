@@ -30,7 +30,7 @@ export = class InfoCommand extends BaseCommand {
             }
 
             case ResCode.OK: {
-                client.say(channel, `${args[0] ? "Level Info" : "Now Playing"} | Level: '${res.level.name}' | Creator: ${res.level.creator} | ID: ${res.level.id} | Requested by: ${res.level.user.userName}`, { replyTo: msg });
+                client.say(channel, `${args[0] ? "Level Info" : "Now Playing"} | Level: '${res.level.name}' | Creator: ${res.level.creator} | ID: ${res.level.id} | Requested by: ${res.level.user.userName} | Notes: ${res.level.notes ?? "none"}`, { replyTo: msg });
                 break;
             }
         }

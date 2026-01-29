@@ -13,10 +13,10 @@ class CommandLoader {
             const cmd: BaseCommand = new (require(`../commands/${cmdName}`));
 
             if (cmd.config.enabled) {
-                client.logger.log(`Loading command: ${cmd.config.name}`);
-                client.commands.set(cmd.config.name, cmd);
+                client.logger.log(`Loading command: ${cmd.info.name}`);
+                client.commands.set(cmd.info.name, cmd);
             } else {
-                client.logger.warn(`Command ${cmd.config.name} is disabled. Ignoring it`);
+                client.logger.warn(`Command ${cmd.info.name} is disabled. Ignoring it`);
             }
 
             return false;
@@ -35,7 +35,7 @@ class CommandLoader {
         const cmd = client.commands.get(cmdName);
         if (!cmd) return cmdName;
 
-        client.logger.log(`Unloading command ${cmd.config.name}`);
+        client.logger.log(`Unloading command ${cmd.info.name}`);
         delete require.cache[require.resolve(`./commands/${cmdName}.js`)];
         return false;
     }

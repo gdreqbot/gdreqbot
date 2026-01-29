@@ -11,12 +11,15 @@ export = class PartCommand extends BaseCommand {
             description: "Makes the bot part from the chat",
             aliases: ["leave"],
             permLevel: PermLevels.STREAMER,
-            enabled: true
+            enabled: true,
+            supportsSilent: true
         });
     }
 
-    async run(client: Gdreqbot, msg: ChatMessage, channel: string): Promise<any> {
-        await client.say(channel, "Leaving the chat... Thanks for using gdreqbot!", { replyTo: msg }).catch(() => {});
+    async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[], opts: { auto: boolean, silent: boolean }): Promise<any> {
+        let replyTo = opts.auto ? null : msg;
+
+        if (!opts.silent) await client.say(channel, "Leaving the chat... Thanks for using gdreqbot!", { replyTo });
 
         let channels: User[] = channelsdb.get("channels");
         let idx = channels.findIndex(c => c.userId == msg.channelId);

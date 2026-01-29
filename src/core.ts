@@ -62,10 +62,19 @@ class Gdreqbot extends ChatClient {
 let channels: User[] = [];
 export const channelsdb = new MapDB("channels.db");
 
+let updateUsers: User[] = [];
+export const updatedb = new MapDB("update.db");
+
 if (channelsdb.get("channels")) {
     channels = channelsdb.get("channels");
 } else {
     channelsdb.set("channels", []).then(() => console.log("channels db setup"));
+}
+
+if (updatedb.get("updateUsers")) {
+    updateUsers = updatedb.get("updateUsers");
+} else {
+    updatedb.set("updateUsers", []).then(() => console.log("update db setup"));
 }
 
 const client = new Gdreqbot({
@@ -134,16 +143,17 @@ client.onMessage(async (channel, user, text, msg) => {
     else if (!blacklist.users.find(u => u.userId == msg.userInfo.userId)) userPerms = PermLevels.USER;
     else userPerms = PermLevels.BLACKLISTED;
 
-    if (text.trim() == "@gdreqbot" && sets?.prefix != client.config.prefix) return client.say(channel, `Prefix is: ${sets.prefix}`, { replyTo: msg });
+    if (text.trim() == "@gdreqbot" && sets?.prefix != client.config.prefix && !sets.silent_mode) return client.say(channel, `Prefix is: ${sets.prefix}`, { replyTo: msg });
 
     let isId = text.match(/\b\d{5,9}\b/);
 
     if (!text.startsWith(sets.prefix ?? config.prefix) && isId && userPerms != PermLevels.BLACKLISTED) {
-        let reqPerm = perms?.find(p => p.cmd == client.commands.get("req").config.name);
+        let reqPerm = perms?.find(p => p.cmd == client.commands.get("req").info.name);
         if ((reqPerm?.perm || client.commands.get("req").config.permLevel) > userPerms) return;
 
         try {
-            await client.commands.get("req").run(client, msg, channel, [isId[0], "idreq"]);  // change args in the future cause stupid
+            let notes = text.replace(isId[0], "").replaceAll(/\s+/g, " ");
+            await client.commands.get("req").run(client, msg, channel, [isId[0], notes.length > 1 ? notes : null], { auto: true, silent: sets.silent_mode });
         } catch (e) {
             client.say(channel, "An error occurred running command: req. If the issue persists, please contact the developer.", { replyTo: msg });
             console.error(e);
@@ -161,14 +171,16 @@ client.onMessage(async (channel, user, text, msg) => {
 
     if (!cmd || !cmd.config.enabled) return;
 
-    let customPerm = perms?.find(p => p.cmd == cmd.config.name);
+    if (!cmd.config.supportsSilent && sets.silent_mode && userPerms < PermLevels.DEV) return;
+
+    let customPerm = perms?.find(p => p.cmd == cmd.info.name);
     if ((customPerm?.perm || cmd.config.permLevel) > userPerms) return;
 
     try {
-        client.logger.log(`Running command: ${cmd.config.name} in channel: ${channel}`);
-        await cmd.run(client, msg, channel, args, userPerms);
+        client.logger.log(`${sets.silent_mode ? "(silent) " : ""}Running command: ${cmd.info.name} in channel: ${channel}`);
+        await cmd.run(client, msg, channel, args, { userPerms, silent: sets.silent_mode });
     } catch (e) {
-        client.say(channel, `An error occurred running command: ${cmd.config.name}. If the issue persists, please contact the developer.`, { replyTo: msg });
+        client.say(channel, `An error occurred running command: ${cmd.info.name}. If the issue persists, please contact the developer.`, { replyTo: msg });
         console.error(e);
     }
 });

@@ -1,4 +1,4 @@
-<%- include('components/header') %>
+<%- include('../components/header') %>
         <style>
             .input-container {
                 display: flex;
@@ -85,17 +85,8 @@
         </style>
         <section class="section">
             <div class="container">
-                <h1 class="title">Dashboard</h1>
-                <hr>
-                <p class="subtitle">Logged in as: <%= user.userName %></p>
-                <form action="/logout" method="GET">
-                    <button class="button" type="submit">
-                        <span class="icon has-text-danger">
-                            <i class="fas fa-arrow-left"></i>
-                        </span>
-                        <span>Logout</span>
-                    </button>
-                </form>
+                <h1 class="title">Configuration</h1>
+                <% if (!hide_note) { %>
                 <hr>
                 <div class="has-text-info">
                     <span class="icon">
@@ -108,8 +99,12 @@
                         <br>
                         <p>• If you later want to remove gdreqbot from your chat, use the <strong class="has-text-info"><%= setData.prefix.value %>part</strong> command, or the button at the bottom of this page.</p>
                     </div>
+                    <br>
+                    <p style="margin-left: 10px">If you've read and understood, click the button below to hide this text forever (a very long time):</p>
+                    <button class="button is-small has-text-info" style="margin-left: 20px; margin-top: 10px" type="button" id="hide">Hide</button>
                 </div>
-                <br>
+                <% } %>
+                <hr>
                 <h1 class="title">Settings</h1>
                 <form class="box" id="settings" autocomplete="off">
                     <input type="hidden" name="formType" value="settings">
@@ -271,19 +266,21 @@
                         <span class="has-text-danger">Part</span>
                     </button>
                 </form>
-                <p>Note: parting gdreqbot will also log you out and <strong>reset your settings!</strong></p>
+                <p>Note: parting gdreqbot will also log you out and <strong>delete all your data!</strong></p>
             </div>
         </section>
         <script>
+            const url = "<%= url %>";
+            const userId = "<%= user.userId %>";
+
             let changes = false;
             let isDefault = {};
-            let userId = "<%= user.userId %>";
 
             async function sendData(form) {
                 let formData = new FormData(form);
 
                 try {
-                    let res = await fetch(`https://gdreqbot.ddns.net/dashboard/${userId}`, {
+                    let res = await fetch(`${url}/dashboard/${userId}/configuration`, {
                         method: "POST",
                         body: formData
                     });
@@ -436,7 +433,7 @@
                 button.disabled = true;
 
                 try {
-                    let res = await fetch(`https://gdreqbot.ddns.net/dashboard/${userId}`, {
+                    let res = await fetch(`${url}/dashboard/${userId}/configuration`, {
                         method: "POST",
                         body: formData
                     });
@@ -463,7 +460,7 @@
                 button.disabled = true;
 
                 try {
-                    let res = await fetch(`https://gdreqbot.ddns.net/dashboard/${userId}`, {
+                    let res = await fetch(`${url}/dashboard/${userId}/configuration`, {
                         method: "POST",
                         body: formData
                     });
@@ -492,7 +489,7 @@
                     formData.append("id", button.dataset.id);
 
                     try {
-                        await fetch(`https://gdreqbot.ddns.net/dashboard/${userId}`, {
+                        await fetch(`${url}/dashboard/${userId}/configuration`, {
                             method: "POST",
                             body: formData
                         });
@@ -512,7 +509,7 @@
                     formData.append("action", "clear");
 
                     try {
-                        await fetch(`https://gdreqbot.ddns.net/dashboard/${userId}`, {
+                        await fetch(`${url}/dashboard/${userId}/configuration`, {
                             method: "POST",
                             body: formData
                         });
@@ -552,5 +549,18 @@
                     evt.returnValue = '';
                 }
             });
+
+            document.querySelector('#hide')?.addEventListener('click', async () => {
+                try {
+                    await fetch(`${url}/dashboard/${userId}/hide`, {
+                        method: "GET",
+                    });
+
+                    window.location.reload();
+                } catch (e) {
+                    console.error(e);
+                }
+            });
         </script>
-<%- include('components/footer') %>
+<%- include('../components/footer') %>
+<%- include('components/sidebar') %>
