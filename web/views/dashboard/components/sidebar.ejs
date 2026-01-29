@@ -62,6 +62,8 @@
         </footer>
     </aside>
     <script>
+        body.classList.add("no-transition");
+
         let collapsed = localStorage.getItem("sidebar-collapsed");
 
         if (collapsed == "true") {
@@ -69,6 +71,22 @@
         } else {
             body.classList.remove("sidebar-collapsed");
         }
+
+        function handleResize() {
+            if (window.innerWidth <= 1023) {
+                body.classList.add('sidebar-collapsed');
+            } else {
+                body.classList.remove('sidebar-collapsed');
+            }
+        }
+
+        handleResize();
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                body.classList.remove('no-transition');
+            });
+        });
 
         let toggle = document.querySelector(".sidebar-toggle");
         //let { body } = document;
@@ -79,5 +97,7 @@
             body.classList.toggle('sidebar-collapsed');
             localStorage.setItem("sidebar-collapsed", body.classList.contains("sidebar-collapsed") ? "true" : "false");
         });
+
+        window.addEventListener('resize', handleResize);
     </script>
 </html>

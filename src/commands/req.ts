@@ -10,7 +10,7 @@ export = class ReqCommand extends BaseCommand {
             name: "req",
             description: "Request a level by name or ID",
             category: "requests",
-            args: "<query>",
+            args: "<query> [<notes>]",
             aliases: ["r", "request", "add", "join"],
             enabled: true,
             supportsSilent: true
@@ -20,14 +20,24 @@ export = class ReqCommand extends BaseCommand {
     async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[], opts: { auto: boolean, silent: boolean }): Promise<any> {
         if (!args.length) {
             if (!opts.silent)
-                return client.say(channel, "Kappa You need to specify a query.", { replyTo: msg });
+                return client.say(channel, "Kappa You need to specify a query (level name or ID).", { replyTo: msg });
             else
                 return;
         }
 
+        let notes;
+
+        if (opts.auto) {
+            notes = args[1];
+        } else if (!opts.auto && !isNaN(parseInt(args[0]))) {
+            if (args.slice(1).length)
+                notes = args.slice(1).join(" ");
+        } else
+            notes = null;
+
         let res = await client.req.addLevel(client, msg.channelId, { userId: msg.userInfo.userId, userName: msg.userInfo.userName },
-            opts.auto ? args[0] : args.join(" "),
-            opts.auto ? args[1] : null
+            opts.auto || notes ? args[0] : args.join(" "),
+            notes
         );
         let sets: Settings = client.db.load("settings", { channelId: msg.channelId });
 
