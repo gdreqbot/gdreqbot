@@ -12,7 +12,7 @@ import multer from "multer";
 import moment from "moment";
 import "moment-duration-format";
 import fs from "fs";
-import Gdreqbot, { channelsdb, updatedb } from './core';
+import Gdreqbot, { channelsdb } from './core';
 import { User } from "./structs/user";
 import { Settings } from "./datasets/settings";
 import { Perm } from "./datasets/perms";
@@ -66,18 +66,11 @@ export = class {
                 }
 
                 let channels: User[] = channelsdb.get("channels");
-                let updateUsers: User[] = updatedb.get("updateUsers");
                 let channel: User = channels.find(c => c.userId == channelId);
-                let update: User = updateUsers.find(u => u.userId == channelId);
 
                 await client.join(channelName);
 
                 if (!channel) {
-                    if (!update) {
-                        updateUsers.push({ userId: channelId, userName: channelName });
-                        await updatedb.set("updateUsers", updateUsers);
-                    }
-
                     // push to channels db
                     channels.push({ userId: channelId, userName: channelName });
                     
@@ -290,6 +283,7 @@ export = class {
                     });
 
                 await client.db.save("blacklist", { channelId: userId }, bl);
+                client.logger.log(`(auto) Blacklisted ${type} in channel: ${userName}`);
                 return res.status(200).json({ success: true });
             } else if (req.body.formType.startsWith("remove")) {
                 if (!levels.length) return res.status(200).json({ success: true });
