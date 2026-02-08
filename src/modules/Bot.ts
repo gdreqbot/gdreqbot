@@ -37,19 +37,20 @@ class Gdreqbot extends ChatClient {
         this.db = new Database("data.db");
         this.req = new Request();
         this.config = config;
+        this.blacklist = new MapDB("blacklist");
 
         const client = this;
 
         this.loadCommands();
 
         client.onConnect(async () => {
-            await client.db.init();
+            //await client.db.init();
 
-            try {
-                await new Server(client).run();
-            } catch (e) {
-                console.error(e);
-            }
+            //try {
+            //    await new Server(client).run();
+            //} catch (e) {
+            //    console.error(e);
+            //}
 
             try {
                 const { channel, timestamp } = require("../../reboot.json");

@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 dotenv.config({ quiet: true });
 
 import Gdreqbot from "./modules/Bot";
+import Server from "./modules/Server";
 import Logger from "./modules/Logger";
 import config from "./config";
 import { User } from "./structs/user";
@@ -48,3 +49,10 @@ const client = new Gdreqbot({
 });
 
 client.connect();
+client.db.init();
+
+try {
+    new Server(client).run();
+} catch (e) {
+    console.error(e);
+}

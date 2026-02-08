@@ -9,7 +9,7 @@ export = class RebootCommand extends BaseCommand {
         super({
             name: "reboot",
             description: "Reboots the bot",
-            enabled: false,
+            enabled: true,
             permLevel: PermLevels.DEV
         });
     }
