@@ -1,4 +1,4 @@
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import { ResCode } from "../modules/Request";
 import { ChatMessage } from "@twurple/chat";
@@ -12,7 +12,7 @@ export = class SetCommand extends BaseCommand {
             description: "View or edit settings",
             args: "[<setting> <value>] (for numeric options, -1 disables it)",
             aliases: ["s", "settings"],
-            enabled: true,
+            enabled: false,
             permLevel: PermLevels.MOD
         });
     }

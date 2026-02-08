@@ -1,4 +1,4 @@
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import { LevelData } from "../datasets/levels";
 import { User } from "../structs/user";
 import { Settings } from "../datasets/settings";

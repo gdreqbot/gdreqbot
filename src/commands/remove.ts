@@ -1,4 +1,4 @@
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import { ResCode } from "../modules/Request";
 import { ChatMessage } from "@twurple/chat";
@@ -13,7 +13,7 @@ export = class RemoveCommand extends BaseCommand {
             privilegeDesc: "Remove the overall last level from the queue, or a specific one",
             privilegeArgs: "[<query>]",
             aliases: ["rm", "oops"],
-            enabled: true,
+            enabled: false,
             supportsPrivilege: true,
             supportsSilent: true,
         });

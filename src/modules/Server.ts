@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config({ quiet: true });
 
-import express, { NextFunction, Request, Response } from "express";
+import express, { NextFunction, Request, Response, Express } from "express";
 import session from "express-session";
 import passport from "passport";
 import { Strategy as twitchStrategy } from "passport-twitch-latest";
@@ -12,24 +12,34 @@ import multer from "multer";
 import moment from "moment";
 import "moment-duration-format";
 import fs from "fs";
-import Gdreqbot, { channelsdb } from './core';
-import { User } from "./structs/user";
-import { Settings } from "./datasets/settings";
-import { Perm } from "./datasets/perms";
-import PermLevels from "./structs/PermLevels";
-import BaseCommand from "./structs/BaseCommand";
-import { Blacklist } from "./datasets/blacklist";
-import { getUser } from "./apis/twitch";
-import { LevelData } from "./datasets/levels";
-import { getLevel } from "./apis/gd";
+import Gdreqbot from "../modules/Bot";
+import { channelsdb } from "../core";
+import { User } from "../structs/user";
+import { Settings } from "../datasets/settings";
+import { Perm } from "../datasets/perms";
+import PermLevels from "../structs/PermLevels";
+import BaseCommand from "../structs/BaseCommand";
+import { Blacklist } from "../datasets/blacklist";
+import { getUser } from "../apis/twitch";
+import { LevelData } from "../datasets/levels";
+import { getLevel } from "../apis/gd";
+import { Server } from "http";
 
-const server = express();
 const port = process.env.PORT || 80;
 const hostname = process.env.HOSTNAME || 'localhost';
 
-export = class {
-    async run(client: Gdreqbot) {
-        server.use('/public', express.static(path.resolve(__dirname, '../web/public')));
+export default class {
+    app: Express;
+    client: Gdreqbot;
+    server: Server;
+
+    constructor(client: Gdreqbot) {
+        this.app = express();
+        this.client = client;
+
+        const server = this.app;
+
+        server.use('/public', express.static(path.resolve(__dirname, '../../web/public')));
         server.use(express.json());
         server.use(express.urlencoded({ extended: false }));
         server.use(
@@ -45,7 +55,7 @@ export = class {
         server.use(passport.initialize());
         server.use(passport.session());
         server.use(bodyParser.json());
-        server.set('views', path.join(__dirname, '../web/views'));
+        server.set('views', path.join(__dirname, '../../web/views'));
 
         server.set('view engine', 'ejs');
 
@@ -155,10 +165,10 @@ export = class {
             let dbUsage = `${((fs.statSync('./data/data.db').size) / 1024).toFixed(2)} KB`;
             let joined = channelsdb.get("channels").length;
             let uptime = moment.duration(process.uptime() * 1000).format(" D [days], H [hrs], m [mins], s [secs]");
-            let twVersion = (require('../package.json').dependencies["@twurple/chat"]).substr(1);
-            let exprVersion = (require('../package.json').dependencies["express"]).substr(1);
+            let twVersion = (require('../../package.json').dependencies["@twurple/chat"]).substr(1);
+            let exprVersion = (require('../../package.json').dependencies["express"]).substr(1);
             let nodeVersion = process.version;
-            let pkgVersion = require('../package.json').version;
+            let pkgVersion = require('../../package.json').version;
 
             let totalReq = 0;
             channelsdb.get("channels").forEach((channel: User) => {
@@ -569,18 +579,36 @@ export = class {
                 }
             }
         });
-
-        client.server = server.listen(parseInt(port.toString()), hostname, () => client.logger.log(`Server listening on http(s)://${hostname}:${port}`));
     }
 
-    checkAuth(req: Request, res: Response, next: NextFunction) {
+    run(): Promise<ServerOutput> {
+        return new Promise((resolve, reject) => {
+            this.server = this.app.listen(parseInt(port.toString()), hostname, () => {
+                this.client.logger.log(`Server listening on http(s)://${hostname}:${port}`);
+                resolve({
+                    close: () => this.close()
+                });
+            });
+
+            this.server.on('error', reject);
+        });
+    }
+
+    close() {
+        if (this.server) {
+            this.server.close();
+            this.server = null;
+        }
+    }
+
+    private checkAuth(req: Request, res: Response, next: NextFunction) {
         if (req.isAuthenticated())
             return next();
 
         res.redirect('/');
     }
 
-    getSettings(sets: any) {
+    private getSettings(sets: any) {
         const { defaultValues } = require('./datasets/settings');
         let obj: any = {};
 
@@ -602,7 +630,7 @@ export = class {
         return obj;
     }
 
-    parseSettings(data: any) {
+    private parseSettings(data: any) {
         let parsed: any = {};
 
         for (let [key, value] of Object.entries(data)) {
@@ -622,7 +650,7 @@ export = class {
         return parsed;
     }
 
-    filterPerms(data: any, perms: Perm[], cmds: Map<string, BaseCommand>) {
+    private filterPerms(data: any, perms: Perm[], cmds: Map<string, BaseCommand>) {
         let filtered: Perm[] = [];
 
         for (let [key, value] of Object.entries(data)) {
@@ -645,8 +673,12 @@ export = class {
         return filtered;
     }
 
-    normalize(str: string) {
+    private normalize(str: string) {
         let normalized = str.toLowerCase();
         return normalized.charAt(0).toUpperCase() + normalized.slice(1);
     }
+}
+
+export interface ServerOutput {
+    close: Function;
 }

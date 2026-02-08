@@ -1,5 +1,5 @@
 import { ChatMessage } from "@twurple/chat";
-import Gdreqbot, { channelsdb } from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 
 export = class PartCommand extends BaseCommand {
@@ -7,7 +7,7 @@ export = class PartCommand extends BaseCommand {
         super({
             name: "invite",
             description: "Invite gdreqbot to your stream chat!",
-            enabled: true
+            enabled: false
         });
     }
 

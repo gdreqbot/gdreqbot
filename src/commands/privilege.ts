@@ -1,4 +1,4 @@
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import { ChatMessage } from "@twurple/chat";
 import PermLevels from "../structs/PermLevels";
@@ -10,7 +10,7 @@ export = class PrivilegeCommand extends BaseCommand {
             description: "Run a command in privilege mode for those supporting it (type !pr help <command> for info)",
             args: "<command>",
             aliases: ["pr", "prm", "prmode"],
-            enabled: true,
+            enabled: false,
             permLevel: PermLevels.MOD,
             supportsSilent: true
         });

@@ -1,5 +1,5 @@
 import { ChatMessage } from "@twurple/chat";
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import PermLevels from "../structs/PermLevels";
 import { Perm } from "../datasets/perms";
@@ -14,7 +14,7 @@ export = class HelpCommand extends BaseCommand {
             args: "[<command>]",
             privilegeArgs: "[<command>]",
             aliases: ["h", "?", "commands", "cmd"],
-            enabled: true,
+            enabled: false,
             supportsPrivilege: true
         });
     }

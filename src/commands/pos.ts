@@ -1,4 +1,4 @@
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import { ResCode } from "../modules/Request";
 import { ChatMessage } from "@twurple/chat";
@@ -13,7 +13,7 @@ export = class PosCommand extends BaseCommand {
             category: "requests",
             args: "[<query>]",
             aliases: ["p", "position"],
-            enabled: true
+            enabled: false
         });
     }
 

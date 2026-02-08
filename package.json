@@ -46,6 +46,7 @@
     "@types/node": "^25.0.10",
     "@types/passport": "^1.0.17",
     "@types/passport-twitch-latest": "^1.0.5",
-    "@types/superagent": "^8.1.9"
+    "@types/superagent": "^8.1.9",
+    "typescript": "^5.9.3"
   }
 }

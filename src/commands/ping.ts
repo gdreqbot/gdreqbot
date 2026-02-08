@@ -1,5 +1,5 @@
 import { ChatMessage } from "@twurple/chat";
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 
 export = class PingCommand extends BaseCommand {
@@ -8,7 +8,7 @@ export = class PingCommand extends BaseCommand {
             name: "ping",
             description: "Gives the bot latency",
             privilegeDesc: "Gives the privileged bot latency",
-            enabled: true,
+            enabled: false,
             supportsPrivilege: true
         });
     }

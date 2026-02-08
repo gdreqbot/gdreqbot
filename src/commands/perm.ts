@@ -1,5 +1,5 @@
 import { ChatMessage } from "@twurple/chat";
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import PermLevels from "../structs/PermLevels";
 import { Perm } from "../datasets/perms";
@@ -13,7 +13,7 @@ export = class PermCommand extends BaseCommand {
             privilegeDesc: "Set required perms for a command",
             privilegeArgs: "set|reset <command> [<perm>]",
             aliases: ["permission", "permissions"],
-            enabled: true,
+            enabled: false,
             permLevel: PermLevels.BLACKLISTED,
             supportsPrivilege: true
         });

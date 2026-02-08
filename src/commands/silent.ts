@@ -1,5 +1,5 @@
 import { ChatMessage } from "@twurple/chat";
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import PermLevels from "../structs/PermLevels";
 
@@ -10,7 +10,7 @@ export = class SilentCommand extends BaseCommand {
             description: "Toggle silent mode",
             category: "requests",
             aliases: ["silent-mode", "silentmode", "togglesilent", "togglesilentmode"],
-            enabled: true,
+            enabled: false,
             permLevel: PermLevels.MOD
         });
     }

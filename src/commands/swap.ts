@@ -1,4 +1,4 @@
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import { ResCode } from "../modules/Request";
 import { ChatMessage } from "@twurple/chat";
@@ -12,7 +12,7 @@ export = class SwapCommand extends BaseCommand {
             category: "requests",
             args: "\"<level1>\" \"<level2>\"",
             aliases: ["sw", "switch"],
-            enabled: true,
+            enabled: false,
             permLevel: PermLevels.MOD
         });
     }

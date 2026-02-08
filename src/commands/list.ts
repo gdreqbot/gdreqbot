@@ -1,5 +1,5 @@
 import { ChatMessage } from "@twurple/chat";
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import { ResCode } from "../modules/Request";
 import BaseCommand from "../structs/BaseCommand";
 import { LevelData } from "../datasets/levels";
@@ -13,7 +13,7 @@ export = class ListCommand extends BaseCommand {
             category: "requests",
             args: "[<page>]",
             aliases: ["l", "q", "queue"],
-            enabled: true
+            enabled: false
         });
     }
 

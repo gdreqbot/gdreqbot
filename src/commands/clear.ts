@@ -1,4 +1,4 @@
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import { ResCode } from "../modules/Request";
 import { ChatMessage } from "@twurple/chat";
@@ -11,7 +11,7 @@ export = class ClearCommand extends BaseCommand {
             description: "Clear the queue",
             category: "requests",
             aliases: ["purge"],
-            enabled: true,
+            enabled: false,
             permLevel: PermLevels.MOD,
             supportsSilent: true
         });

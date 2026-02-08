@@ -1,5 +1,5 @@
 import { ChatMessage } from "@twurple/chat";
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import PermLevels from "../structs/PermLevels";
 import { Settings } from "../datasets/settings";
@@ -11,7 +11,7 @@ export = class ToggleCommand extends BaseCommand {
             description: "Toggle requests",
             category: "requests",
             aliases: ["t"],
-            enabled: true,
+            enabled: false,
             permLevel: PermLevels.MOD
         });
     }

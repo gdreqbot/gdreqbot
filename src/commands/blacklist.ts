@@ -1,4 +1,4 @@
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import { ChatMessage } from "@twurple/chat";
 import PermLevels from "../structs/PermLevels";
@@ -13,7 +13,7 @@ export = class BlacklistCommand extends BaseCommand {
             description: "Manage blacklisted users or levels",
             args: "user|level add|remove|list|clear [<arg>]",
             aliases: ["bl", "blist"],
-            enabled: true,
+            enabled: false,
             permLevel: PermLevels.MOD
         });
     }

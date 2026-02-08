@@ -1,5 +1,6 @@
 import { ChatMessage } from "@twurple/chat";
-import Gdreqbot, { channelsdb } from "../core";
+import Gdreqbot from "../modules/Bot";
+import { channelsdb } from "../core";
 import BaseCommand from "../structs/BaseCommand";
 import PermLevels from "../structs/PermLevels";
 import { User } from "../structs/user";
@@ -11,7 +12,7 @@ export = class PartCommand extends BaseCommand {
             description: "Makes the bot part from the chat",
             aliases: ["leave"],
             permLevel: PermLevels.STREAMER,
-            enabled: true,
+            enabled: false,
             supportsSilent: true
         });
     }

@@ -1,5 +1,5 @@
 import { ChatMessage } from "@twurple/chat";
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import PermLevels from "../structs/PermLevels";
 import { Settings } from "../datasets/settings";
@@ -11,7 +11,7 @@ export = class RandomCommand extends BaseCommand {
             description: "Toggle the random queue",
             category: "requests",
             aliases: ["rndm", "togglerandom", "randomqueue", "randomq", "rndmq"],
-            enabled: true,
+            enabled: false,
             permLevel: PermLevels.MOD,
             supportsSilent: true
         });

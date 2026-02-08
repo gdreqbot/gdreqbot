@@ -1,5 +1,6 @@
 import { ChatMessage } from "@twurple/chat";
-import Gdreqbot, { updatedb } from "../core";
+import Gdreqbot from "../modules/Bot";
+import { updatedb } from "../core";
 import { ResCode } from "../modules/Request";
 import BaseCommand from "../structs/BaseCommand";
 import PermLevels from "../structs/PermLevels";
@@ -12,7 +13,7 @@ export = class NextCommand extends BaseCommand {
             description: "Shifts the queue",
             category: "requests",
             aliases: ["n", "skip"],
-            enabled: true,
+            enabled: false,
             permLevel: PermLevels.MOD,
             supportsSilent: true,
         });

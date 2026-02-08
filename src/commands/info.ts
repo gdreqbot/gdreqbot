@@ -1,4 +1,4 @@
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import { ResCode } from "../modules/Request";
 import { ChatMessage } from "@twurple/chat";
@@ -11,7 +11,7 @@ export = class InfoCommand extends BaseCommand {
             category: "requests",
             args: "[<query>]",
             aliases: ["i", "get", "g"],
-            enabled: true
+            enabled: false
         });
     }
 
