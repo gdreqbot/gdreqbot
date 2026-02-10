@@ -24,6 +24,7 @@ import { getUser } from "../apis/twitch";
 import { LevelData } from "../datasets/levels";
 import { getLevel } from "../apis/gd";
 import { Server } from "http";
+import { Session } from "../datasets/session";
 
 const port = process.env.PORT || 80;
 const hostname = process.env.HOSTNAME || 'localhost';
@@ -85,7 +86,8 @@ export default class {
                     channels.push({ userId: channelId, userName: channelName });
                     
                     await channelsdb.set("channels", channels);
-                    await client.db.setDefault({ channelId, channelName });
+                    //await client.db.setDefault({ channelId, channelName });
+                    await client.db.setDefault({ userId: channelId, userName: channelName }, "session");
 
                     await client.say(channelName, "Thanks for adding gdreqbot! You can get a list of commands by typing !help");
                     client.logger.log(`→   New channel joined: ${channelName}`);
@@ -132,24 +134,57 @@ export default class {
         });
 
         server.get('/auth', (req, res, next) => {
-            let redirectTo = req.query.redirectTo || 'dashboard';
+            const { redirect_uri } = req.query;
 
+            if (!redirect_uri?.toString().startsWith('http://127.0.0.1:'))
+                return res.status(400).send('Invalid redirect');
+
+            console.log('/auth')
             passport.authenticate('twitch', {
-                state: redirectTo as string
+                state: redirect_uri.toString()
             })(req, res, next);
         });
 
         server.get('/auth/callback', passport.authenticate('twitch', {
             failureRedirect: '/auth/error'
-        }), (req, res) => {
-            let redirectTo = req.query.state;
+        }), async (req, res) => {
+            let userId = (req.user as User).userId;
+            let userName = (req.user as User).userName;
 
-            if (redirectTo == 'add')
-                res.redirect('/auth/success');
-            else if (redirectTo == 'dashboard')
-                res.redirect('/dashboard');
-            else
-                res.redirect('/');
+            // save user and session secret
+            let session: Session = client.db.load("session", { userId });
+            let secret: string;
+            let expires = Date.now() + 6.048E+8;
+
+            if (!session.secret) {
+                secret = uuid();
+                await client.db.save("session", { userId }, {
+                    secret,
+                    issued: Date.now(),
+                    expires
+                });
+            } else {
+                secret = session.secret;
+                await client.db.save("session", { userId }, { expires });
+            }
+
+            const redirect_uri = req.query.state;
+
+            if (!redirect_uri)
+                return res.status(500).send('Missing redirect');
+
+            console.log('/auth/callback')
+            console.log(redirect_uri)
+
+            res.redirect(`${redirect_uri}?secret=${secret}`);
+            //let redirectTo = req.query.state;
+
+            //if (redirectTo == 'add')
+            //    res.redirect('/auth/success');
+            //else if (redirectTo == 'dashboard')
+            //    res.redirect('/dashboard');
+            //else
+            //    res.redirect('/');
         });
 
         server.get('/auth/success', (req, res) => {
@@ -579,6 +614,16 @@ export default class {
                 }
             }
         });
+
+        server.get('/api/me', this.authSession, (req, res) => {
+            const userId = (req.user as User).userId;
+            const userName = (req.user as User).userName;
+
+            res.json({
+                userId,
+                userName
+            });
+        });
     }
 
     run(): Promise<ServerOutput> {
@@ -606,6 +651,19 @@ export default class {
             return next();
 
         res.redirect('/');
+    }
+
+    private authSession = (req: Request, res: Response, next: NextFunction) => {
+        const secret = req.headers.authorization?.replace('Bearer ', '');
+        if (!secret)
+            return res.status(401).send('Missing secret');
+
+        let session: Session = this.client.db.load("session", { secret });
+        if (!session)
+            return res.status(401).send('Unauthorized secret');
+
+        req.user = session;
+        next();
     }
 
     private getSettings(sets: any) {
