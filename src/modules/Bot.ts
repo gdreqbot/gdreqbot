@@ -16,6 +16,7 @@ import { Settings } from "../datasets/settings";
 import { Perm } from "../datasets/perms";
 import { User } from "../structs/user";
 import { channelsdb } from "../core";
+import { RefreshingAuthProvider } from "@twurple/auth";
 
 class Gdreqbot extends ChatClient {
     commands: Map<string, BaseCommand>;
@@ -27,14 +28,34 @@ class Gdreqbot extends ChatClient {
     config: typeof config;
     blacklist: MapDB;
 
-    constructor(options: ChatClientOptions) {
-        super(options);
+    constructor(db: Database, options?: ChatClientOptions) {
+        const tokenData = JSON.parse(fs.readFileSync(`./tokens.${config.botId}.json`, "utf-8"));
+        const authProvider = new RefreshingAuthProvider({
+            clientId: config.clientId,
+            clientSecret: config.clientSecret
+        });
+        
+        authProvider.addUser(config.botId, tokenData);
+        authProvider.addIntentsToUser(config.botId, ["chat"]);
+        
+        authProvider.onRefresh((userId, newTokenData) => {
+            fs.writeFileSync(`./tokens.${userId}.json`, JSON.stringify(newTokenData, null, 4), "utf-8");
+            new Logger("Client").log("Refreshing token...");
+        });
+
+        const channels: User[] = channelsdb.get("channels");
+
+        super({
+            ...options,
+            authProvider,
+            channels: channels.map(c => c.userName)
+        });
 
         this.commands = new Map();
         this.cooldowns = new Map();
         this.cmdLoader = new CommandLoader();
-        this.logger = new Logger();
-        this.db = new Database("data.db");
+        this.logger = new Logger("Client");
+        this.db = db;
         this.req = new Request();
         this.config = config;
         this.blacklist = new MapDB("blacklist");
@@ -43,8 +64,8 @@ class Gdreqbot extends ChatClient {
 
         this.loadCommands();
 
-        client.onConnect(async () => {
-            //await client.db.init();
+        this.onConnect(async () => {
+            //await this.db.init();
 
             //try {
             //    await new Server(client).run();
@@ -54,39 +75,39 @@ class Gdreqbot extends ChatClient {
 
             try {
                 const { channel, timestamp } = require("../../reboot.json");
-                await client.say(channel, `Rebooted in ${((Date.now() - timestamp) / 1000).toFixed(1)} seconds.`);
+                await this.say(channel, `Rebooted in ${((Date.now() - timestamp) / 1000).toFixed(1)} seconds.`);
 
                 unlink("./reboot.json", () => {});
             } catch {}
 
-            client.logger.log("Ready");
-            client.logger.log(`Joining <channel>.`);
+            this.logger.ready("Ready");
+            this.logger.ready(`Joining <channel>.`);
         });
 
-        client.onJoinFailure(async (channel, reason) => {
+        this.onJoinFailure(async (channel, reason) => {
             let channels: User[] = channelsdb.get("channels");
             let idx = channels.findIndex(c => c.userName == channel);
             if (idx == -1) return;
 
             let channelId = channels[idx].userId;
 
-            await client.db.deleteAll({ channelId, channelName: channel });
+            await this.db.deleteAll({ channelId, channelName: channel });
 
             channels.splice(idx, 1);
             await channelsdb.set("channels", channels);
-            client.logger.log(`←   Channel left: ${channel} (${reason})`);
+            this.logger.log(`←   Channel left: ${channel} (${reason})`);
         });
 
-        client.onMessage(async (channel, user, text, msg) => {
-            if (msg.userInfo.userId == client.config.botId && process.env.ENVIRONMENT != "dev") return;
+        this.onMessage(async (channel, user, text, msg) => {
+            if (msg.userInfo.userId == this.config.botId && process.env.ENVIRONMENT != "dev") return;
 
-            await client.db.setDefault({ channelId: msg.channelId, channelName: channel });
+            await this.db.setDefault({ channelId: msg.channelId, channelName: channel });
 
             let userPerms: PermLevels;
-            let blacklist: Blacklist = client.db.load("blacklist", { channelId: msg.channelId });
-            let sets: Settings = client.db.load("settings", { channelId: msg.channelId });
-            let perms: Perm[] = client.db.load("perms", { channelId: msg.channelId }).perms;
-            let globalUserBl: string[] = client.blacklist.get("users");
+            let blacklist: Blacklist = this.db.load("blacklist", { channelId: msg.channelId });
+            let sets: Settings = this.db.load("settings", { channelId: msg.channelId });
+            let perms: Perm[] = this.db.load("perms", { channelId: msg.channelId }).perms;
+            let globalUserBl: string[] = this.blacklist.get("users");
 
             if (globalUserBl?.includes(msg.userInfo.userId)) return;
 
@@ -98,19 +119,19 @@ class Gdreqbot extends ChatClient {
             else if (!blacklist.users.find(u => u.userId == msg.userInfo.userId)) userPerms = PermLevels.USER;
             else userPerms = PermLevels.BLACKLISTED;
 
-            if (text.trim() == "@gdreqbot" && sets?.prefix != client.config.prefix && !sets.silent_mode) return client.say(channel, `Prefix is: ${sets.prefix}`, { replyTo: msg });
+            if (text.trim() == "@gdreqbot" && sets?.prefix != this.config.prefix && !sets.silent_mode) return this.say(channel, `Prefix is: ${sets.prefix}`, { replyTo: msg });
 
             let isId = text.match(/\b\d{5,9}\b/);
 
             if (!text.startsWith(sets.prefix ?? config.prefix) && isId && userPerms != PermLevels.BLACKLISTED) {
-                let reqPerm = perms?.find(p => p.cmd == client.commands.get("req").info.name);
-                if ((reqPerm?.perm || client.commands.get("req").config.permLevel) > userPerms) return;
+                let reqPerm = perms?.find(p => p.cmd == this.commands.get("req").info.name);
+                if ((reqPerm?.perm || this.commands.get("req").config.permLevel) > userPerms) return;
 
                 try {
                     let notes = text.replace(isId[0], "").replaceAll(/\s+/g, " ");
-                    await client.commands.get("req").run(client, msg, channel, [isId[0], notes.length > 1 ? notes : null], { auto: true, silent: sets.silent_mode });
+                    await this.commands.get("req").run(client, msg, channel, [isId[0], notes.length > 1 ? notes : null], { auto: true, silent: sets.silent_mode });
                 } catch (e) {
-                    client.say(channel, "An error occurred running command: req. If the issue persists, please contact the developer.", { replyTo: msg });
+                    this.say(channel, "An error occurred running command: req. If the issue persists, please contact the developer.", { replyTo: msg });
                     console.error(e);
                 }
 
@@ -121,8 +142,8 @@ class Gdreqbot extends ChatClient {
 
             let args = text.slice(sets.prefix?.length ?? config.prefix.length).trim().split(/ +/);
             let cmdName = args.shift().toLowerCase();
-            let cmd = client.commands.get(cmdName)
-                || client.commands.values().find(c => c.config.aliases?.includes(cmdName));
+            let cmd = this.commands.get(cmdName)
+                || this.commands.values().find(c => c.config.aliases?.includes(cmdName));
 
             if (!cmd || !cmd.config.enabled) return;
 
@@ -132,10 +153,10 @@ class Gdreqbot extends ChatClient {
             if ((customPerm?.perm || cmd.config.permLevel) > userPerms) return;
 
             try {
-                client.logger.log(`${sets.silent_mode ? "(silent) " : ""}Running command: ${cmd.info.name} in channel: ${channel}`);
+                this.logger.log(`${sets.silent_mode ? "(silent) " : ""}Running command: ${cmd.info.name} in channel: ${channel}`);
                 await cmd.run(client, msg, channel, args, { userPerms, silent: sets.silent_mode });
             } catch (e) {
-                client.say(channel, `An error occurred running command: ${cmd.info.name}. If the issue persists, please contact the developer.`, { replyTo: msg });
+                this.say(channel, `An error occurred running command: ${cmd.info.name}. If the issue persists, please contact the developer.`, { replyTo: msg });
                 console.error(e);
             }
         });

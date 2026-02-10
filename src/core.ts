@@ -9,20 +9,8 @@ import Server from "./modules/Server";
 import Logger from "./modules/Logger";
 import config from "./config";
 import { User } from "./structs/user";
-
-const tokenData = JSON.parse(fs.readFileSync(`./tokens.${config.botId}.json`, "utf-8"));
-const authProvider = new RefreshingAuthProvider({
-    clientId: config.clientId,
-    clientSecret: config.clientSecret
-});
-
-authProvider.addUser(config.botId, tokenData);
-authProvider.addIntentsToUser(config.botId, ["chat"]);
-
-authProvider.onRefresh((userId, newTokenData) => {
-    fs.writeFileSync(`./tokens.${userId}.json`, JSON.stringify(newTokenData, null, 4), "utf-8");
-    new Logger().log("Refreshing token...");
-});
+import Database from "./modules/Database";
+import Socket from "./modules/Socket";
 
 // ugliest workaround ever
 let channels: User[] = [];
@@ -43,16 +31,18 @@ if (updatedb.get("updateUsers")) {
     updatedb.set("updateUsers", []).then(() => console.log("update db setup"));
 }
 
-const client = new Gdreqbot({
-    authProvider,
-    channels: channels.map(c => c.userName)
-});
+const database = new Database("data.db");
+database.init();
 
+const client = new Gdreqbot(database);
 client.connect();
-client.db.init();
+
+const server = new Server(database, client);
 
 try {
-    new Server(client).run();
+    server.run();
 } catch (e) {
     console.error(e);
 }
+
+const socket = new Socket(database);

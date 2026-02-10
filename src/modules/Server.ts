@@ -25,18 +25,24 @@ import { LevelData } from "../datasets/levels";
 import { getLevel } from "../apis/gd";
 import { Server } from "http";
 import { Session } from "../datasets/session";
+import Database from "./Database";
+import Logger from "./Logger";
 
-const port = process.env.PORT || 80;
+const port = process.env.SERVER_PORT || 80;
 const hostname = process.env.HOSTNAME || 'localhost';
 
 export default class {
     app: Express;
-    client: Gdreqbot;
+    private client: Gdreqbot;
     server: Server;
+    logger: Logger;
+    db: Database;
 
-    constructor(client: Gdreqbot) {
+    constructor(db: Database, client: Gdreqbot) {
         this.app = express();
         this.client = client;
+        this.db = db;
+        this.logger = new Logger("Server");
 
         const server = this.app;
 
@@ -62,42 +68,42 @@ export default class {
 
         passport.use(
             new twitchStrategy({
-                clientID: client.config.clientId,
-                clientSecret: client.config.clientSecret,
+                clientID: this.client.config.clientId,
+                clientSecret: this.client.config.clientSecret,
                 callbackURL: process.env.REDIRECT_URI,
                 scope: 'chat:read chat:edit'
             }, async (accessToken, refreshToken, profile, done) => {
                 let channelName = profile.login;
                 let channelId = profile.id;
 
-                let bl: string[] = client.blacklist.get("users");
+                let bl: string[] = this.client.blacklist.get("users");
                 if (bl?.includes(channelId)) {
-                    client.logger.warn(`Blacklisted user tried to auth: ${channelName} (${channelId})`);
+                    this.logger.warn(`Blacklisted user tried to auth: ${channelName} (${channelId})`);
                     return done(null, false);
                 }
 
                 let channels: User[] = channelsdb.get("channels");
                 let channel: User = channels.find(c => c.userId == channelId);
 
-                await client.join(channelName);
+                await this.client.join(channelName);
 
                 if (!channel) {
                     // push to channels db
                     channels.push({ userId: channelId, userName: channelName });
                     
                     await channelsdb.set("channels", channels);
-                    //await client.db.setDefault({ channelId, channelName });
-                    await client.db.setDefault({ userId: channelId, userName: channelName }, "session");
+                    //await this.db.setDefault({ channelId, channelName });
+                    await this.db.setDefault({ userId: channelId, userName: channelName }, "session");
 
-                    await client.say(channelName, "Thanks for adding gdreqbot! You can get a list of commands by typing !help");
-                    client.logger.log(`→   New channel joined: ${channelName}`);
+                    await this.client.say(channelName, "Thanks for adding gdreqbot! You can get a list of commands by typing !help");
+                    this.logger.log(`→   New channel joined: ${channelName}`);
                 } else if (channel.userName != channelName) {
                     let idx = channels.findIndex(c => c.userId == channelId);
                     channels[idx].userName = channelName;
 
                     await channelsdb.set("channels", channels);
                 } else {
-                    client.logger.log(`Authenticated: ${channelName}`);
+                    this.logger.log(`Authenticated: ${channelName}`);
                 }
 
                 let user: User = {
@@ -123,7 +129,7 @@ export default class {
 
         const renderView = (req: Request, res: Response, view: string, data: any = {}) => {
             const baseData = {
-                bot: client,
+                bot: this.client,
                 path: req.path,
             };
             res.render(path.resolve(`./web/views/${view}`), Object.assign(baseData, data));
@@ -152,20 +158,20 @@ export default class {
             let userName = (req.user as User).userName;
 
             // save user and session secret
-            let session: Session = client.db.load("session", { userId });
+            let session: Session = this.db.load("session", { userId });
             let secret: string;
             let expires = Date.now() + 6.048E+8;
 
             if (!session.secret) {
                 secret = uuid();
-                await client.db.save("session", { userId }, {
+                await this.db.save("session", { userId }, {
                     secret,
                     issued: Date.now(),
                     expires
                 });
             } else {
                 secret = session.secret;
-                await client.db.save("session", { userId }, { expires });
+                await this.db.save("session", { userId }, { expires });
             }
 
             const redirect_uri = req.query.state;
@@ -207,7 +213,7 @@ export default class {
 
             let totalReq = 0;
             channelsdb.get("channels").forEach((channel: User) => {
-                let data: LevelData[] = client.db.load("levels", { channelId: channel.userId })?.levels;
+                let data: LevelData[] = this.db.load("levels", { channelId: channel.userId })?.levels;
                 if (data) data.forEach(() => totalReq++);
             });
 
@@ -226,7 +232,7 @@ export default class {
 
         server.get('/commands', (req, res) => {
             res.render('commands', {
-                cmds: client.commands.values()
+                cmds: this.client.commands.values()
                     .filter(cmd => cmd.config.permLevel < PermLevels.DEV)
                     .map(cmd => {
                         return {
@@ -264,357 +270,6 @@ export default class {
             renderView(req, res, 'versions');
         });
 
-        server.get('/dashboard', (req, res) => {
-            if (req.isAuthenticated())
-                return res.redirect(`/dashboard/${(req.user as User).userId}/requests`);
-
-            res.redirect('/auth');
-        });
-
-        server.get('/dashboard/:user/requests', this.checkAuth, async (req, res) => {
-            let userId = (req.user as User).userId;
-            let userName = (req.user as User).userName;
-
-            if (userId != req.params.user)
-                return res.status(403).send('Unauthorized');
-
-            await client.db.setDefault({ channelId: userId, channelName: userName });
-
-            let levels: LevelData[] = client.db.load("levels", { channelId: userId }).levels;
-            let sets: Settings = client.db.load("settings", { channelId: userId });
-            let bl: Blacklist = client.db.load("blacklist", { channelId: userId });
-
-            res.render('dashboard/requests', {
-                isAuthenticated: true,
-                user: req.user,
-                levels,
-                sets,
-                bl,
-                page: "req",
-                hide_note: sets.hide_note,
-                url: process.env.URL
-            });
-        });
-
-        server.post('/dashboard/:user/requests', this.checkAuth, multer().none(), async (req, res) => {
-            let userId = (req.user as User).userId;
-            let userName = (req.user as User).userName;
-
-            if (userId != req.params.user)
-                return res.status(403).send('Unauthorized');
-
-            let levels: LevelData[] = client.db.load("levels", { channelId: userId }).levels;
-            let sets: Settings = client.db.load("settings", { channelId: userId });
-            let bl: Blacklist = client.db.load("blacklist", { channelId: userId });
-
-            let args: string[] = [];
-            let cmd: BaseCommand;
-
-            if (req.body.formType.startsWith("toggle")) {
-                let type = req.body.formType.split("-")[1];
-                cmd = client.commands.get(type.replace("req", "toggle"));
-            } else if (req.body.formType.startsWith("blacklist")){
-                let type = req.body.formType.split("-")[1];
-
-                if (type == "user" && !bl.users.find(u => u.userId == levels[0].user.userId))
-                    bl.users.push(levels[0].user);
-                else if (type == "level" && !bl.levels.find(l => l.id == levels[0].id))
-                    bl.levels.push({
-                        name: levels[0].name,
-                        creator: levels[0].creator,
-                        id: levels[0].id,
-                        user: null,
-                        notes: null
-                    });
-
-                await client.db.save("blacklist", { channelId: userId }, bl);
-                client.logger.log(`(auto) Blacklisted ${type} in channel: ${userName}`);
-                return res.status(200).json({ success: true });
-            } else if (req.body.formType.startsWith("remove")) {
-                if (!levels.length) return res.status(200).json({ success: true });
-
-                let id = req.body.formType.split("-")[1];
-                cmd = client.commands.get("privilege");
-                args = ["remove", id];
-            } else {
-                if (!levels.length) return res.status(200).json({ success: true }); 
-                cmd = client.commands.get(req.body.formType);
-            }
-
-            try {
-                await cmd.run(client, { channelId: userId } as any, userName, args, { auto: true, silent: sets.silent_mode });
-                client.logger.log(`(auto) Running command: ${cmd.info.name} in channel: ${userName}`);
-            } catch (e) {
-                client.say(userName, `An error occurred running command: ${cmd.info.name}. If the issue persists, please contact the developer.`);
-                console.error(e);
-            }
-
-            res.status(200).json({ success: true });
-        });
-
-        server.get('/dashboard/:user/configuration', this.checkAuth, async (req, res) => {
-            let userId = (req.user as User).userId;
-            let userName = (req.user as User).userName;
-
-            if (userId != req.params.user)
-                return res.status(403).send('Unauthorized');
-
-            await client.db.setDefault({ channelId: userId, channelName: userName });
-
-            let sets: Settings = client.db.load("settings", { channelId: userId });
-            let perms: Perm[] = client.db.load("perms", { channelId: userId }).perms;
-            let bl: Blacklist = client.db.load("blacklist", { channelId: userId });
-
-            let cmdData: any = [];
-            let setData: any = this.getSettings(sets);
-
-            client.commands.forEach(cmd => {
-                if (cmd.config.permLevel == PermLevels.DEV) return;
-
-                let permData = perms.find(p => p.cmd == cmd.info.name);
-
-                let toPush = {
-                    name: cmd.info.name,
-                    desc: cmd.info.description,
-                    perm: this.normalize(PermLevels[permData?.perm ?? cmd.config.permLevel]),
-                    defaultPerm: this.normalize(PermLevels[cmd.config.permLevel]),
-                    isDefault: !Boolean(permData)
-                };
-
-                cmdData.push(toPush);
-            });
-
-            let permLiterals = Object.keys(PermLevels).filter(k => isNaN(Number(k)));
-            permLiterals.pop();
-
-            res.render('dashboard/config', {
-                isAuthenticated: true,
-                user: req.user,
-                setData,
-                cmdData,
-                perms: permLiterals.map(p => this.normalize(p)),
-                bl,
-                page: "set",
-                hide_note: sets.hide_note,
-                url: process.env.URL
-            });
-        });
-
-        server.post('/dashboard/:user/configuration', this.checkAuth, multer().none(), async (req, res) => {
-            let userId = (req.user as User).userId;
-            let userName = (req.user as User).userName;
-
-            if (userId != req.params.user)
-                return res.status(403).send('Unauthorized');
-
-            switch (req.body.formType) {
-                case "settings": {
-                    let sets = this.parseSettings(req.body);
-                    await client.db.save("settings", { channelId: userId }, sets);
-                    client.logger.log(`Dashboard: updated settings for channel: ${userName}`);
-                    break;
-                }
-
-                case "perms": {
-                    let perms: Perm[] = client.db.load("perms", { channelId: userId }).perms;
-                    let filtered = this.filterPerms(req.body, perms, client.commands);
-
-                    filtered.forEach(perm => {
-                        let name = perm.cmd.split('.')[0];
-                        let toDelete = Boolean(perm.cmd.split('.')[1]);
-
-                        let savedPerm = perms.find(p => p.cmd == name);
-
-                        if (savedPerm) {
-                            if (toDelete)
-                                perms.splice(perms.findIndex(p => p.cmd == name), 1);
-                            else
-                                savedPerm.perm = perm.perm;
-                        } else
-                            if (!toDelete) perms.push(perm);
-                    });
-
-                    await client.db.save("perms", { channelId: userId }, { perms });
-                    client.logger.log(`Dashboard: updated perms for channel: ${userName}`);
-                    break;
-                }
-
-                case "blacklist-users": {
-                    let userBl: User[] = client.db.load("blacklist", { channelId: userId }).users;
-                    let invalid: string[] = [];
-
-                    switch (req.body.action) {
-                        case "add": {
-                            let users = req.body.users.split(",").map((u: string) => u.trim()).filter(Boolean);
-                            let hasInvalid = false;
-
-                            for (let i = 0; i < users.length; i++) {
-                                let raw = await getUser(users[i], "login");
-                                if (!raw?.data.length) {
-                                    invalid.push(users[i]);
-                                    hasInvalid = true;
-                                    continue;
-                                }
-
-                                if (hasInvalid)
-                                    continue;
-
-                                let data = {
-                                    userId: raw.data[0].id,
-                                    userName: raw.data[0].login
-                                };
-
-                                if (!userBl.find(u => u.userId == data.userId))
-                                    userBl.push(data);
-                            }
-
-                            break;
-                        }
-
-                        case "remove": {
-                            let idx = userBl.findIndex(u => u.userId == req.body.id);
-                            if (idx == -1) return res.status(200).json({ success: true });
-
-                            userBl.splice(idx, 1);
-                            break;
-                        }
-
-                        case "clear": {
-                            userBl = [];
-                            break;
-                        }
-                    }
-
-                    await client.db.save("blacklist", { channelId: userId }, { users: userBl });
-
-                    if (invalid.length > 0) {
-                        res.status(400).json({
-                            success: false,
-                            invalid,
-                        });
-                    } else {
-                        client.logger.log(`Dashboard: updated user blacklist for channel: ${userName}`);
-                        res.status(200).json({ success: true });
-                    }
-                    break;
-                }
-
-                case "blacklist-levels": {
-                    let levelBl: LevelData[] = client.db.load("blacklist", { channelId: userId }).levels;
-                    let invalid: string[] = [];
-
-                    switch (req.body.action) {
-                        case "add": {
-                            let levels = req.body.levels.split(",").map((u: string) => u.trim()).filter(Boolean);
-                            let hasInvalid = false;
-
-                            for (let i = 0; i < levels.length; i++) {
-                                let raw = await getLevel(levels[i]);
-                                if (raw == "-1") {
-                                    invalid.push(levels[i]);
-                                    hasInvalid = true;
-                                    continue;
-                                }
-
-                                if (hasInvalid)
-                                    continue;
-
-                                let data = client.req.parseLevel(raw);
-
-                                if (!levelBl)
-                                    levelBl = [data];
-                                else if (!levelBl.find(l => l.id == data.id))
-                                    levelBl.push(data);
-                            }
-
-                            break;
-                        }
-
-                        case "remove": {
-                            if (!levelBl)
-                                break;
-
-                            let idx = levelBl.findIndex(l => l.id == req.body.id);
-                            if (idx == -1) return res.status(200).json({ success: true });
-
-                            levelBl.splice(idx, 1);
-                            break;
-                        }
-
-                        case "clear": {
-                            levelBl = [];
-                            break;
-                        }
-                    }
-
-                    await client.db.save("blacklist", { channelId: userId }, { levels: levelBl });
-
-                    if (invalid.length > 0) {
-                        res.status(400).json({
-                            success: false,
-                            invalid,
-                        });
-                    } else {
-                        client.logger.log(`Dashboard: updated level blacklist for channel: ${userName}`);
-                        res.status(200).json({ success: true });
-                    }
-                    break;
-                }
-
-                default: {
-                    client.logger.error("what???");
-                    break;
-                }
-            }
-
-            res.status(200);
-        });
-
-        server.get('/dashboard/:user/hide', this.checkAuth, multer().none(), async (req, res) => {
-            let userId = (req.user as User).userId;
-            let userName = (req.user as User).userName;
-
-            if (userId != req.params.user)
-                return res.status(403).send('Unauthorized');
-            
-            await client.db.setDefault({ channelId: userId, channelName: userName });
-
-            let sets: Settings = client.db.load("settings", { channelId: userId });
-            if (!sets.hide_note) await client.db.save("settings", { channelId: userId }, { hide_note: true });
-
-            res.status(200).json({ success: true });
-        });
-
-        server.get('/logout', (req, res, next) => {
-            if (req.isAuthenticated())
-                req.logout(err => {
-                    if (err) return next(err);
-                });
-
-            res.redirect('/');
-        });
-
-        server.get('/dashboard/:user/part', this.checkAuth, async (req, res, next) => {
-            let userId = (req.user as User).userId;
-            let userName = (req.user as User).userName;
-
-            if (userId != req.params.user)
-                return res.status(403).send('Unauthorized');
-
-            let channels: User[] = channelsdb.get("channels");
-            let user = channels.find(c => c.userId == userId);
-
-            if (user) {
-                try {
-                    await client.commands.get('part').run(client, { channelId: userId } as any, userName, [], { auto: true });  // yes, I feel shame in doing this
-                    res.redirect('/');
-                } catch (err) {
-                    client.logger.error('', err);
-                    renderView(req, res, 'error');
-                }
-            }
-        });
-
         server.get('/api/me', this.authSession, (req, res) => {
             const userId = (req.user as User).userId;
             const userName = (req.user as User).userName;
@@ -629,7 +284,7 @@ export default class {
     run(): Promise<ServerOutput> {
         return new Promise((resolve, reject) => {
             this.server = this.app.listen(parseInt(port.toString()), hostname, () => {
-                this.client.logger.log(`Server listening on http(s)://${hostname}:${port}`);
+                this.logger.ready(`Server listening on http(s)://${hostname}:${port}`);
                 resolve({
                     close: () => this.close()
                 });
@@ -658,77 +313,12 @@ export default class {
         if (!secret)
             return res.status(401).send('Missing secret');
 
-        let session: Session = this.client.db.load("session", { secret });
+        let session: Session = this.db.load("session", { secret });
         if (!session)
             return res.status(401).send('Unauthorized secret');
 
         req.user = session;
         next();
-    }
-
-    private getSettings(sets: any) {
-        const { defaultValues } = require('./datasets/settings');
-        let obj: any = {};
-
-        for (let [key, value] of Object.entries(defaultValues).slice(3)) {
-            if (!sets[key])
-                obj[key] = {
-                    value,
-                    defaultValue: value,
-                    isDefault: true
-                };
-            else
-                obj[key] = {
-                    value: sets[key],
-                    defaultValue: value,
-                    isDefault: sets[key] == defaultValues[key]
-                };
-        }
-
-        return obj;
-    }
-
-    private parseSettings(data: any) {
-        let parsed: any = {};
-
-        for (let [key, value] of Object.entries(data)) {
-            if (key == "formType") continue;
-            if (!value) {
-                parsed[key] = -1;
-                continue;
-            }
-
-            let n = parseInt(value as any);
-            if (!isNaN(n))
-                value = n;
-
-            parsed[key] = value;
-        }
-
-        return parsed;
-    }
-
-    private filterPerms(data: any, perms: Perm[], cmds: Map<string, BaseCommand>) {
-        let filtered: Perm[] = [];
-
-        for (let [key, value] of Object.entries(data)) {
-            if (!value) continue;
-
-            let cmd = cmds.get(key);
-            if (!cmd) continue;
-
-            let permData = perms.find(p => p.cmd == cmd.info.name);
-            let permValue: any = PermLevels[(value as any).toUpperCase()];
-
-            if (permValue != (permData?.perm ?? cmd.config.permLevel)) {
-                filtered.push({
-                    cmd: permValue == cmd.config.permLevel ? `${cmd.info.name}.d` : cmd.info.name,
-                    perm: permValue
-                });
-            }
-        }
-
-        return filtered;
     }
 
     private normalize(str: string) {
