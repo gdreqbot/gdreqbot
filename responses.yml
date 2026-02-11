@@ -9,7 +9,7 @@ blacklist:
   add: "Added <str> to the <type> blacklist."
   remove: "Removed <str> from the <type> blacklist."
   clear: "Cleared the <type> blacklist."
-  empty: "The <type> blacklist is empty.",
+  empty: "The <type> blacklist is empty."
   list: "Page <page> of <pages> (<size> <type>s) | <list>"
 
 clear:
@@ -117,3 +117,4 @@ generic:
   user_no_lvls: "Kappa You don't have any levels in the queue."
   not_in_q: "Kappa That level is not in the queue."
   prefix: "Prefix is: <prefix>"
+  cmd_err: "An error occurred running command: <cmd>. If the issue persists, please contact the developer."

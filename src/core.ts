@@ -45,4 +45,4 @@ try {
     console.error(e);
 }
 
-const socket = new Socket(database);
+const socket = new Socket(database, client);
