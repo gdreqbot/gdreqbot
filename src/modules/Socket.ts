@@ -2,6 +2,10 @@ import { Server, WebSocket } from "ws";
 import Database from "./Database";
 import Gdreqbot from "./Bot";
 import Logger from "./Logger";
+import yml from "yaml";
+import fs from "fs";
+
+const responses = yml.parse(fs.readFileSync('./responses.yml', 'utf8'));
 
 const port = parseInt(process.env.WS_PORT) || 8080;
 const hostname = process.env.HOSTNAME || 'localhost';
@@ -16,6 +20,7 @@ export default class {
         this.wss = new WebSocket.Server({ port });
         this.db = db;
         this.logger = new Logger("Socket");
+        console.log(responses)
 
         this.wss.on('listening', () => this.logger.ready(`Socket listening on ws://${hostname}:${port}`));
 
@@ -32,4 +37,21 @@ export default class {
         this.logger.log("Closing Socket...");
         this.wss.close();
     }
+
+    private parseResponse(res: Response) {
+        let str: string = res.path.split('.').reduce((acc, key) => acc?.[key], responses);
+        if (!res.data)
+            return str;
+
+        for (let key in res.data) {
+            str = str.replace(`<${key}>`, res.data[key]);
+        }
+
+        return str;
+    }
+}
+
+interface Response {
+    path: string;
+    data?: any;
 }

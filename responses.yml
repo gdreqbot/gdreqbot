@@ -1,13 +1,16 @@
 blacklist:
   invalid_bl: "Select a valid blacklist (user or level)"
   invalid_action: "Select a valid action (add|remove|list|clear)"
+  no_args: "Specify a <type>."
   error: "An error occurred fetching <type> data. Please try again."
   not_found: "That <type> doesn't exist."
   already_bl: "That <type> is already blacklisted."
+  not_bl: "That <type> isn't blacklisted."
   add: "Added <str> to the <type> blacklist."
   remove: "Removed <str> from the <type> blacklist."
   clear: "Cleared the <type> blacklist."
-  empty: "The <type> blacklist is empty."
+  empty: "The <type> blacklist is empty.",
+  list: "Page <page> of <pages> (<size> <type>s) | <list>"
 
 clear:
   ok: "PogChamp Queue cleared."
@@ -15,7 +18,12 @@ clear:
 help:
   not_found: "Kappa That command doesn't exist."
   no_privilege: "That command doesn't support privilege mode."
-  list: "<prefix>help <command> for more info | <list>"
+  cmd:
+    base: "<prefix><name>: <desc> | args: <args> | aliases: <aliases> | required perm: <perm>"
+    pr: "<prefix>pr <name>: <desc> | args: <args>"
+  list:
+    base: "<prefix>help <command> for more info | <list>"
+    pr: "<prefix>pr help <command> for more info | <list>"
 
 info:
   base: "Now Playing | Level: '<name>' | Creator: <creator> | ID: <id> | Requested by: <user> | Notes: <notes>"
