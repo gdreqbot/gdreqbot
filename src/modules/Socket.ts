@@ -44,6 +44,9 @@ export default class {
             return str;
 
         for (let key in res.data) {
+            if (res.data[key].startsWith('http://') || res.data[key].startsWith('https://'))
+                return null;
+
             str = str.replace(`<${key}>`, res.data[key]);
         }
 

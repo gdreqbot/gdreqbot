@@ -17,7 +17,7 @@ clear:
 
 help:
   not_found: "Kappa That command doesn't exist."
-  no_privilege: "That command doesn't support privilege mode."
+  no_pr: "That command doesn't support privilege mode."
   cmd:
     base: "<prefix><name>: <desc> | args: <args> | aliases: <aliases> | required perm: <perm>"
     pr: "<prefix>pr <name>: <desc> | args: <args>"
@@ -35,16 +35,21 @@ list:
   base: "Page <page> of <pages> (<size> levels) | <list>"
   random: "[RANDOM QUEUE] Page <page> of <pages> (<size> levels) | <list>"
 
-next: "PogChamp Next <type>level: '<name>' (<id>) by <creator>"
+next:
+  base: "PogChamp Next level: '<name>' (<id>) by <creator>"
+  random: "PogChamp Next random level: '<name>' (<id>) by <creator>"
 
 perm:
   base: "Your permission level is: <perm>"
   invalid_action: "Select a valid action (set|reset)"
+  no_cmd: "Select a command."
   not_found: "That command doesn't exist."
   unauthorized_cmd: "You can't manage commands that require a permission higher than yours."
+  no_perm: "Select a permission to apply: <perms>"
+  invalid_perm: "Invalid permission, please select one of: <perms>"
   unauthorized_perm: "You can't set a permission higher than yours."
-  set: "Set permission for <cmd> to: <perm>"
-  reset: "Reset <cmd> to its default permission (<perm>)"
+  set: "Set permission for <prefix><cmd> to: <perm>"
+  reset: "Reset <prefix><cmd> to its default permission (<perm>)"
 
 ping:
   base: "pong"
@@ -69,6 +74,7 @@ random:
 remove: "PogChamp Removed '<name>' by <creator> from the queue."
 
 req:
+  no_query: "Kappa Specify a query (level name or ID)"
   not_found:
     id: "Kappa Couldn't find a level matching that ID (is it unlisted?)"
     query: "Kappa Couldn't find a level matching that query (is it unlisted?)"
@@ -82,6 +88,7 @@ req:
   ok: "PogChamp Added '<name>' (<id>) by <creator> to the queue at position <pos>"
 
 set:
+  list: "Settings: <list>"
   invalid_key: "Error: invalid setting"
   invalid_value: "Error: invalid value"
   invalid_range: "Error: value must be either -1 or greater than 0"
@@ -92,7 +99,7 @@ silent:
   disabled: "Silent mode is now disabled. The bot will send messages as usual."
 
 swap:
-  no_args: "Kappa You need to specify two levels to swap. (Specify both in quotes if a level name has a space)"
+  no_args: "Kappa Specify two levels to swap. (Specify both in quotes if a level name has a space)"
   not_found: "Kappa The level '<name>' is not in the queue."
   ok: "PogCHamp Swapped '<name0>' (<id0>) at position <pos0> with '<name1>' (<id1>) at position (<pos1)"
 
