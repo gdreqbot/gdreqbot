@@ -4,5 +4,5 @@ export default {
     botId: process.env.BOT_ID,
     ownerId: process.env.OWNER_ID,
     prefix: process.env.PREFIX,
-    clientVersion: "1.0.1"
+    clientVersion: "1.0.2"
 };
