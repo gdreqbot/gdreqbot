@@ -235,14 +235,14 @@ export default class {
 
             const version = req.headers.version;
             if (version != config.clientVersion) {
-                this.logger.warn(`Client is outdated: ${userName}`);
+                //this.logger.warn(`Client is outdated: ${userName}`);
                 return res.status(401).json({
                     text: "Outdated client",
                     upstream: config.clientVersion
                 });
             }
 
-            this.logger.log(`Authenticated: ${userName}`);
+            //this.logger.log(`Authenticated: ${userName}`);
             res.json({
                 userId,
                 userName
