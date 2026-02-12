@@ -96,6 +96,11 @@ class Database {
         return entries.data;
     }
 
+    size(path: string) {
+        let data = this.db.get(path);
+        return data?.length || 0;
+    }
+
     private objQuery(data: any, query: any) {
         if (!data) return null;
 

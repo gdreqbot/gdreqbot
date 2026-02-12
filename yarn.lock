@@ -75,10 +75,10 @@
   dependencies:
     tslib "^2.4.0"
 
-"@galaxy05/map.db@^1.2.2":
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/@galaxy05/map.db/-/map.db-1.2.2.tgz#5890b94c2edbf528e4fe753cc22a11dad7971bee"
-  integrity sha512-sZ5voxJSkKhiz/nYBSI1RYUrSS/Em2uDP8IR57+cOtd2j4ffWz3fH39nzg6y+ntHnAxjDd7/dMgIL/plb56t1g==
+"@galaxy05/map.db@^1.3.1":
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/@galaxy05/map.db/-/map.db-1.3.1.tgz#ee0b6c8114ab6525499b42b42cbcb0b1e3d74b3d"
+  integrity sha512-H6U3UuWmVm6s5tbBOnj4J0gaxEOi4EnYvqntu1ivv3aNS5ITM7bmkuqh5KjSnB5N97vbW2v8rzq/9Uep/nI3Bg==
   dependencies:
     typescript "^5.9.3"
 

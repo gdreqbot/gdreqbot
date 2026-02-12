@@ -29,20 +29,33 @@ export default class {
             ws.authenticated = false;
             this.logger.log("Client connected.");
 
-            ws.on('message', raw => {
-                const msg: Response = JSON.parse(raw.toString());
+            ws.on('message', async raw => {
+                const msg: SocketMsg = JSON.parse(raw.toString());
 
-                if (!ws.authenticated) return this.authenticate(ws, msg);
+                if (!ws.authenticated) return await this.authenticate(ws, msg);
 
-                let res = this.parseResponse(msg);
+                let res = this.parseResponse(msg.res);
                 if (res) {
-                    this.client.say(ws.userName, res);
+                    let replyTo = msg.msgId ?? null;
+                    this.client.say(ws.userName, res, { replyTo });
+                    this.logger.log(`${!replyTo ? "(auto) " : ""}Ran command: ${msg.res.path.split('.')[0]} in channel: ${ws.userName}`);
                 }
             });
 
             ws.on('close', () => {
                 this.logger.log("Client disconnected.");
+                this.client.part(ws.userName);
             });
+
+            ws.on('error', err => {
+                console.error(err);
+                this.logger.error(`Error occurred (${ws.userName})`);
+            });
+        });
+
+        this.wss.on('error', err => {
+            console.error(err);
+            this.logger.error('Error occurred (server socket)');
         });
     }
 
@@ -51,13 +64,20 @@ export default class {
         this.wss.close();
     }
 
+    sendFailure(ws: Socket) {
+        ws.send("failure");
+        ws.close();
+    }
+
     private parseResponse(res: Response) {
+        if (!res.path) return null;
+
         let str: string = res.path.split('.').reduce((acc, key) => acc?.[key], responses);
         if (!res.data)
             return str;
 
         for (let key in res.data) {
-            if (res.data[key].startsWith('http://') || res.data[key].startsWith('https://'))
+            if (res.data[key].toString().startsWith('http://') || res.data[key].toString().startsWith('https://'))
                 return null;
 
             str = str.replace(`<${key}>`, res.data[key]);
@@ -66,7 +86,7 @@ export default class {
         return str;
     }
 
-    private authenticate(ws: Socket, msg: any) {
+    private async authenticate(ws: Socket, msg: any) {
         if (!ws.authenticated) {
             if (msg.type != "auth") {
                 this.logger.warn("Disconnecting unauthorized client...");
@@ -85,6 +105,14 @@ export default class {
             ws.userId = session.userId;
             ws.userName = session.userName;
             ws.send(JSON.stringify({ type: "auth_ok" }));
+            this.logger.log(`Client authenticated: ${session.userName}`);
+
+            try {
+                await this.client.join(ws.userName);
+                this.client.say(session.userName, "Thanks for using gdreqbot!");
+            } catch {
+                this.sendFailure(ws);
+            }
             return true;
         }
     }
@@ -94,6 +122,11 @@ interface Socket extends WebSocket {
     authenticated: boolean;
     userId: string;
     userName: string;
+}
+
+interface SocketMsg {
+    res: Response;
+    msgId?: string;
 }
 
 interface Response {

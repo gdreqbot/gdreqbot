@@ -15,33 +15,26 @@ export = class GlobalBlCommand extends BaseCommand {
     }
 
     async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[]): Promise<any> {
-        let bl: string[];
-
-        if (args[0] == "users")
-            bl = client.blacklist.get("users");
-        else if (args[0] == "levels")
-            bl = client.blacklist.get("levels");
-        else return;
+        if (!["users", "levels"].includes(args[0])) return;
 
         let str: string;
 
         switch (args[1]) {
             case "add":
-                bl?.length ? bl.push(args[2]) : bl = [args[2]];
+                await client.blacklist.add(args[2], args[0] as "users" | "levels");
                 str = "Added";
                 break;
 
             case "remove":
-                bl?.length ? bl.splice(bl.indexOf(args[2]), 2) : bl = [];
+                await client.blacklist.remove(args[2], args[0] as "users" | "levels");
                 str = "Removed";
                 break;
 
             case "clear":
-                bl = [];
+                await client.blacklist.clear(args[0] as "users" | "levels");
                 str = "Cleared";
         }
 
-        await client.blacklist.set(args[0], bl);
         client.say(channel, `${str} ${args[2] || ""}`);
     }
 }
