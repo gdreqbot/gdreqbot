@@ -2,6 +2,7 @@ import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import { ChatMessage } from "@twurple/chat";
 import PermLevels from "../structs/PermLevels";
+import { Session } from "../datasets/session";
 
 export = class GlobalBlCommand extends BaseCommand {
     constructor() {
@@ -22,6 +23,10 @@ export = class GlobalBlCommand extends BaseCommand {
         switch (args[1]) {
             case "add":
                 await client.blacklist.add(args[2], args[0] as "users" | "levels");
+
+                let session: Session = client.db.load("session", { userId: args[2] });
+                if (session) await client.db.delete("session", { userId: args[0] });
+
                 str = "Added";
                 break;
 

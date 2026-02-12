@@ -125,7 +125,7 @@ export default class {
             // save user and session secret
             let session: Session = this.db.load("session", { userId });
             let secret: string;
-            let expires = Date.now() + 6.048E+8;
+            let expires = Date.now() + (1000*60*60*24); // 24h
 
             if (!session?.secret) {
                 secret = uuid();
