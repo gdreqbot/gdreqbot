@@ -7,10 +7,7 @@
         "esModuleInterop": true,
         "noImplicitAny": true,
         "removeComments": true,
-        "noUncheckedIndexedAccess": false,
-        "lib": [
-            "ESNext"
-        ]
+        "noUncheckedIndexedAccess": false
     },
     "include": [
         "src/**/*"

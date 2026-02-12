@@ -1,6 +1,6 @@
 {
   "name": "gdreqbot",
-  "version": "4.0.1",
+  "version": "5.0.0",
   "description": "Early stage Geometry Dash level requests",
   "main": "dist/core.js",
   "scripts": {
@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/GalaxyVinci05/gdreqbot#readme",
   "dependencies": {
-    "@galaxy05/map.db": "^1.2.2",
+    "@galaxy05/map.db": "^1.3.1",
     "@twurple/api": "^8.0.3",
     "@twurple/auth": "^8.0.3",
     "@twurple/chat": "^8.0.3",
@@ -36,7 +36,9 @@
     "passport": "^0.7.0",
     "passport-twitch-latest": "^1.0.0",
     "superagent": "^10.3.0",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "ws": "^8.19.0",
+    "yaml": "^2.8.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
@@ -46,6 +48,7 @@
     "@types/node": "^25.0.10",
     "@types/passport": "^1.0.17",
     "@types/passport-twitch-latest": "^1.0.5",
-    "@types/superagent": "^8.1.9"
+    "@types/superagent": "^8.1.9",
+    "typescript": "^5.9.3"
   }
 }

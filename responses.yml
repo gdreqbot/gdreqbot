@@ -1,0 +1,120 @@
+blacklist:
+  invalid_bl: "Select a valid blacklist (user or level)"
+  invalid_action: "Select a valid action (add|remove|list|clear)"
+  no_args: "Specify a <type>."
+  error: "An error occurred fetching <type> data. Please try again."
+  not_found: "That <type> doesn't exist."
+  already_bl: "That <type> is already blacklisted."
+  not_bl: "That <type> isn't blacklisted."
+  add: "Added <str> to the <type> blacklist."
+  remove: "Removed <str> from the <type> blacklist."
+  clear: "Cleared the <type> blacklist."
+  empty: "The <type> blacklist is empty."
+  list: "Page <page> of <pages> (<size> <type>s) | <list>"
+
+clear:
+  ok: "PogChamp Queue cleared."
+
+help:
+  not_found: "Kappa That command doesn't exist."
+  no_pr: "That command doesn't support privilege mode."
+  cmd:
+    base: "<prefix><name>: <desc> | args: <args> | aliases: <aliases> | required perm: <perm>"
+    pr: "<prefix>pr <name>: <desc> | args: <args>"
+  list:
+    base: "<prefix>help <command> for more info | <list>"
+    pr: "<prefix>pr help <command> for more info | <list>"
+
+info:
+  base: "Now Playing | Level: '<name>' | Creator: <creator> | ID: <id> | Requested by: <user> | Notes: <notes>"
+  alt: "Level Info | Level: '<name>' | Creator: <creator> | ID: <id> | Requested by: <user> | Notes: <notes>"
+
+invite: "You can add me to your stream chat at the following link: https://gdreqbot.ddns.net"
+
+list:
+  base: "Page <page> of <pages> (<size> levels) | <list>"
+  random: "[RANDOM QUEUE] Page <page> of <pages> (<size> levels) | <list>"
+
+next:
+  base: "PogChamp Next level: '<name>' (<id>) by <creator>"
+  random: "PogChamp Next random level: '<name>' (<id>) by <creator>"
+
+perm:
+  base: "Your permission level is: <perm>"
+  invalid_action: "Select a valid action (set|reset)"
+  no_cmd: "Select a command."
+  not_found: "That command doesn't exist."
+  unauthorized_cmd: "You can't manage commands that require a permission higher than yours."
+  no_perm: "Select a permission to apply: <perms>"
+  invalid_perm: "Invalid permission, please select one of: <perms>"
+  unauthorized_perm: "You can't set a permission higher than yours."
+  set: "Set permission for <prefix><cmd> to: <perm>"
+  reset: "Reset <prefix><cmd> to its default permission (<perm>)"
+
+ping:
+  base: "pong"
+  alt: "privileged pong"
+
+pos:
+  base:
+    base: "Your level (<name>) is at position <pos> in the queue."
+    alt: "'<name>' is at position <pos> in the queue."
+  random:
+    base: "Your level (<name>) is at position <pos> in the queue. [RANDOM QUEUE]"
+    alt: "<name>' is at position <pos> in the queue. [RANDOM QUEUE]"
+
+privilege:
+  no_cmd: "Specify a command to run in privilege mode."
+  no_support: "This command doesn't support privilege mode."
+
+random:
+  enabled: "Random queue is now enabled. Levels will now be picked randomly from the queue."
+  disabled: "Random queue is now disabled. The queue order is followed as normal."
+
+remove: "PogChamp Removed '<name>' by <creator> from the queue."
+
+req:
+  no_query: "Kappa Specify a query (level name or ID)"
+  not_found:
+    id: "Kappa Couldn't find a level matching that ID (is it unlisted?)"
+    query: "Kappa Couldn't find a level matching that query (is it unlisted?)"
+  already_added: "Kappa That level is already in the queue."
+  max_per_user: "Kappa You have the max amount of levels in the queue (<max_levels_per_user>)" # check if this is number
+  full: "Kappa The queue is full (max <max_queue_size> levels)"
+  disabled:
+    base: "Kappa Requests are disabled."
+    first_time: "Kappa Requests are disabled. (enable in the app, or use <prefix>toggle)" # prefix max length
+  blacklisted: "Kappa That level is blacklisted."
+  ok: "PogChamp Added '<name>' (<id>) by <creator> to the queue at position <pos>"
+
+set:
+  list: "Settings: <list>"
+  invalid_key: "Error: invalid setting"
+  invalid_value: "Error: invalid value"
+  invalid_range: "Error: value must be either -1 or greater than 0"
+  ok: "Set '<key>' to '<value>'"
+
+silent:
+  enabled: "Silent mode is now enabld. The bot will stop sending any messages in chat."
+  disabled: "Silent mode is now disabled. The bot will send messages as usual."
+
+swap:
+  no_args: "Kappa Specify two levels to swap. (Specify both in quotes if a level name has a space)"
+  not_found: "Kappa The level '<name>' is not in the queue."
+  ok: "PogCHamp Swapped '<name0>' (<id0>) at position <pos0> with '<name1>' (<id1>) at position (<pos1)"
+
+toggle:
+  enabled: "Requests are now enabled."
+  disabled: "Requests are now disabled."
+
+generic:
+  error: "An error occurred, please try again. (If the issue persists, please contact the developer)"
+  forgot: "the dev forgot what to put here ¯\\_(ツ)_/¯"
+  nan: "Kappa Sir that's not a number."
+  page_overflow: "Kappa There aren't that many pages."
+  empty_q: "Kappa The queue is empty."
+  lvl_not_found: "Kappa Couldn't find that level."
+  user_no_lvls: "Kappa You don't have any levels in the queue."
+  not_in_q: "Kappa That level is not in the queue."
+  prefix: "Prefix is: <prefix>"
+  cmd_err: "An error occurred running command: <cmd>. If the issue persists, please contact the developer."

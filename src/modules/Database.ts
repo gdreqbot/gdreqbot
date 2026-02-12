@@ -1,11 +1,14 @@
 import MapDB from "@galaxy05/map.db";
 import { readdirSync } from "fs";
+import Logger from "./Logger";
 
 class Database {
     private db: MapDB;
+    private logger: Logger;
 
     constructor(filename: string) {
         this.db = new MapDB(filename);
+        this.logger = new Logger("Database");
     }
 
     async init() {
@@ -13,19 +16,30 @@ class Database {
         for (const dataset of datasets) {
             let path = dataset.split(".")[0];
 
-            if (!this.db.get(path))
+            if (!this.db.get(path)) {
                 await this.db.set(path, []);
+                this.logger.log(`Initialized ${path}`);
+            }
         }
+
+        this.logger.ready("Ready")
     }
 
-    async setDefault(query: any) {
-        let datasets = readdirSync("./dist/datasets/").filter(f => f.endsWith(".js"));
-        for (const dataset of datasets) {
-            let path = dataset.split(".")[0];
+    async setDefault(query: any, path?: string) {
+        if (path) {
             let entry = this.objQuery(this.db.get(path), query);
 
             if (!entry.data?.length)
                 await this.save(path, query);
+        } else {
+            const datasets = readdirSync("./dist/datasets/").filter(f => f.endsWith(".js"));
+            for (const dataset of datasets) {
+                let path = dataset.split(".")[0];
+                let entry = this.objQuery(this.db.get(path), query);
+
+                if (!entry.data?.length)
+                    await this.save(path, query);
+            }
         }
     }
 
@@ -80,6 +94,11 @@ class Database {
 
         if (entries.data.length) await this.db.set(path, data);
         return entries.data;
+    }
+
+    size(path: string) {
+        let data = this.db.get(path);
+        return data?.length || 0;
     }
 
     private objQuery(data: any, query: any) {

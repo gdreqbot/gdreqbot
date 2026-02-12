@@ -3,5 +3,6 @@ export default {
     clientSecret: process.env.SECRET,
     botId: process.env.BOT_ID,
     ownerId: process.env.OWNER_ID,
-    prefix: process.env.PREFIX
+    prefix: process.env.PREFIX,
+    clientVersion: "1.0.0"
 };

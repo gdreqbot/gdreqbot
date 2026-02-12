@@ -1,6 +1,7 @@
 import { ChatMessage } from "@twurple/chat";
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
+import PermLevels from "../structs/PermLevels";
 
 export = class PingCommand extends BaseCommand {
     constructor() {
@@ -9,14 +10,11 @@ export = class PingCommand extends BaseCommand {
             description: "Gives the bot latency",
             privilegeDesc: "Gives the privileged bot latency",
             enabled: true,
-            supportsPrivilege: true
+            permLevel: PermLevels.DEV
         });
     }
 
-    async run(client: Gdreqbot, msg: ChatMessage, channel: string, args: string[], opts: { privilegeMode: boolean }): Promise<any> {
-        if (opts.privilegeMode)
-            await client.say(channel, "privileged pong", { replyTo: msg });
-        else
-            await client.say(channel, "pong", { replyTo: msg });
+    async run(client: Gdreqbot, msg: ChatMessage, channel: string): Promise<any> {
+        await client.say(channel, "pong", { replyTo: msg });
     }
 }

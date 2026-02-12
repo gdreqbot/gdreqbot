@@ -1,5 +1,5 @@
 import { writeFile } from "fs/promises";
-import Gdreqbot from "../core";
+import Gdreqbot from "../modules/Bot";
 import BaseCommand from "../structs/BaseCommand";
 import { ChatMessage } from "@twurple/chat";
 import PermLevels from "../structs/PermLevels";
