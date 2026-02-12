@@ -23,6 +23,13 @@ export default class {
         this.logger = new Logger("Socket");
         this.client = client;
 
+        setInterval(() => {
+            this.wss.clients.forEach(ws => {
+                if (ws.readyState == WebSocket.OPEN)
+                    ws.ping();
+            });
+        }, 30*1000);
+
         this.wss.on('listening', () => this.logger.ready(`Socket listening on ws://${hostname}:${port}`));
 
         this.wss.on('connection', (ws: Socket) => {
