@@ -65,6 +65,7 @@ export default class {
     }
 
     sendFailure(ws: Socket) {
+        this.logger.warn("Failure");
         ws.send("failure");
         ws.close();
     }
