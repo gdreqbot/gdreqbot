@@ -95,7 +95,7 @@ set:
   ok: "Set '<key>' to '<value>'"
 
 silent:
-  enabled: "Silent mode is now enabld. The bot will stop sending any messages in chat."
+  enabled: "Silent mode is now enabled. The bot will stop sending any messages in chat."
   disabled: "Silent mode is now disabled. The bot will send messages as usual."
 
 swap:
