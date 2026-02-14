@@ -1,49 +1,111 @@
 <%- include('components/header') %>
+    <style>
+        .hyperlink {
+            color: #DBDBDB;
+        }
+        .link-icon {
+            color: transparent;
+        }
+        .link-icon:hover {
+            color: grey;
+        }
+    </style>
     <section class="section">
         <div class="container">
             <h1 class="title">FAQ</h1>
             <hr>
             <ul>
                 <li>
-                    <p class="title is-5">• Something went wrong while adding gdreqbot</p>
-                    <p class="subtitle is-6">This may happen for the following reasons:</p>
-                    <p>• You are blacklisted from using gdreqbot</p>
-                    <p>• Some other reason (please ask on Discord in this case)</p>
+                    <p class="title is-5" id="windows-flags-as-dangerous">
+                        <a href="#windows-flags-as-dangerous" class="hyperlink">
+                            • Windows flags gdreqbot as potentially dangerous <i class="link-icon fas fa-link"></i>
+                        </a>
+                    </p>
+                    <div style="margin-left: 15px">
+                        <p class="subtitle is-6">Windows flags any software that's not downloaded often or that isn't signed (which costs a lot)</p>
+                        <p class="subtitle is-6">Your options are:</p>
+                        <p>• Clicking on "More info" and "Run anyway"</p>
+                        <p>• Building gdreqbot from source</p>
+                        <p>• Not using gdreqbot</p>
+                    </div>
                 </li>
-                <br>
+                <br></br>
                 <li>
-                    <p class="title is-5">• Clicking any button redirects to error page</p>
-                    <p class="subtitle is-6">gdreqbot is most likely banned from your channel. If that's not the case, please ask on Discord.</p>
+                    <p class="title is-5" id="something-went-wrong">
+                        <a href="#something-went-wrong" class="hyperlink">
+                            • Something went wrong while adding gdreqbot <i class="link-icon fas fa-link"></i>
+                        </a>
+                    </p>
+                    <div style="margin-left: 15px">
+                        <p class="subtitle is-6">This may happen for the following reasons:</p>
+                        <p>• You are blacklisted from using gdreqbot</p>
+                        <p>• Some other reason (please ask on Discord in this case)</p>
+                    </div>
                 </li>
-                <br>
+                <br></br>
                 <li>
-                    <p class="title is-5">• The bot isn't responding in chat</p>
-                    <p class="subtitle is-6">May happen for a few reasons:</p>
-                    <p>• If any chat restrictions are applied (sub-only, follower-only, ...) you'll need to VIP or MOD gdreqbot</p>
-                    <p>• If it still doesn't work, try to logout and login to the dashboard</p>
-                    <p>• If after all that it still doesn't work, please ask on Discord</p>
+                    <p class="title is-5" id="clicking-gives-error">
+                        <a href="#clicking-gives-error" class="hyperlink">
+                            • Clicking any button redirects to error page <i class="link-icon fas fa-link"></i>
+                        </a>
+                    </p>
+                    <div style="margin-left: 15px">
+                        <p class="subtitle is-6">gdreqbot is most likely banned from your channel. If that's not the case, please ask on Discord.</p>
+                    </div>
                 </li>
-                <br>
+                <br></br>
                 <li>
-                    <p class="title is-5">• The bot responds twice with shared chat</p>
-                    <p class="subtitle is-6">If you're streaming with the <strong>Streaming Together</strong> feature and have shared chat, make sure only one of you is using gdreqbot</p>
+                    <p class="title is-5" id="bot-not-responding">
+                        <a href="#bot-not-responding" class="hyperlink">
+                            • The bot isn't responding in chat <i class="link-icon fas fa-link"></i>
+                        </a>
+                    </p>
+                    <div style="margin-left: 15px">
+                        <p class="subtitle is-6">May happen for a few reasons:</p>
+                        <p>• If any chat restrictions are applied (sub-only, follower-only, ...) you'll need to VIP or MOD gdreqbot</p>
+                        <p>• If it still doesn't work, try to logout and login to the dashboard</p>
+                        <p>• If after all that it still doesn't work, please ask on Discord</p>
+                    </div>
                 </li>
-                <br>
+                <br></br>
                 <li>
-                    <p class="title is-5">• I timed the bot out and even after the timeout it doesn't reply in chat</p>
-                    <p class="subtitle is-6">This needs manual intervention. Please ask on Discord so I can fix it.</p>
+                    <p class="title is-5" id="bot-responds-twice">
+                        <a href="#bot-responds-twice" class="hyperlink">
+                            • The bot responds twice with shared chat <i class="link-icon fas fa-link"></i>
+                        </a>
+                    </p>
+                    <div style="margin-left: 15px">
+                        <p class="subtitle is-6">If you're streaming with the <strong>Streaming Together</strong> feature and have shared chat, make sure only one of you is using gdreqbot</p>
+                    </div>
                 </li>
-                <br>
+                <br></br>
                 <li>
-                    <p class="title is-5">• GD/Geode mod?</p>
-                    <p class="subtitle is-6">A Geode mod is ""in the plans"" but won't come anytime soon.</p>
+                    <p class="title is-5" id="bot-timed-out">
+                        <a href="#bot-timed-out" class="hyperlink">
+                            • I timed the bot out and even after the timeout it doesn't reply in chat <i class="link-icon fas fa-link"></i>
+                        </a>
+                    </p>
+                    <div style="margin-left: 15px">
+                        <p class="subtitle is-6">This needs manual intervention. Please ask on Discord so I can fix it.</p>
+                    </div>
+                </li>
+                <br></br>
+                <li>
+                    <p class="title is-5" id="gd-mod">
+                        <a href="#gd-mod" class="hyperlink">
+                            • GD/Geode mod? <i class="link-icon fas fa-link"></i>
+                        </a>
+                    </p>
+                    <div style="margin-left: 15px">
+                        <p class="subtitle is-6">A Geode mod is ""in the plans"" but won't come anytime soon.</p>
+                    </div>
                 </li>
             </ul>
             <hr>
             <p class="subtitle is-5">If your issue isn't covered here, please feel free to ask in the official Discord support server linked below:</p>
             <a href="https://discord.gg/gzeKZJnB2B" class="button" target="_blank">
                 <span class="icon has-text-info">
-                    <i class="fab fa-discord"></i>
+                    <i class="has-text-info fab fa-discord"></i>
                 </span>
                 <span>Discord</span>
             </a>
