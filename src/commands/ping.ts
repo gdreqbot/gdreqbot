@@ -15,6 +15,6 @@ export = class PingCommand extends BaseCommand {
     }
 
     async run(client: Gdreqbot, msg: ChatMessage, channel: string): Promise<any> {
-        await client.say(channel, "pong", { replyTo: msg });
+        await client.say(channel, "server pong", { replyTo: msg });
     }
 }
