@@ -134,7 +134,8 @@ export default class {
                     userName,
                     secret,
                     issued: Date.now(),
-                    expires
+                    expires,
+                    active: false
                 });
 
                 this.logger.log(`→   New channel: ${userName}`);

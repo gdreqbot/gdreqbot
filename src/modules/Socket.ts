@@ -49,9 +49,10 @@ export default class {
                 }
             });
 
-            ws.on('close', () => {
+            ws.on('close', async () => {
                 this.logger.log("Client disconnected.");
                 this.client.part(ws.userName);
+                await this.db.save("session", { userId: ws.userId }, { active: false });
             });
 
             ws.on('error', err => {
@@ -117,6 +118,7 @@ export default class {
 
             try {
                 await this.client.join(ws.userName);
+                await this.db.save("session", { secret: msg.secret }, { active: true });
                 this.client.say(session.userName, "Thanks for using gdreqbot!");
             } catch {
                 this.sendFailure(ws);

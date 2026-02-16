@@ -32,6 +32,8 @@ setInterval(async () => {
         if (!expired?.length) return;
 
         for (let i = 0; i < expired.length; i++) {
+            if (expired[i].active) continue;
+
             logger.log(`Deleting expired session: ${expired[i].userName}`);
             await database.delete("session", { secret: expired[i].secret });
         }
