@@ -234,15 +234,6 @@ export default class {
             const userId = (req.user as User).userId;
             const userName = (req.user as User).userName;
 
-            const version = req.headers.version;
-            if (version != config.clientVersion) {
-                //this.logger.warn(`Client is outdated: ${userName}`);
-                return res.status(401).json({
-                    text: "Outdated client",
-                    upstream: config.clientVersion
-                });
-            }
-
             //this.logger.log(`Authenticated: ${userName}`);
             res.json({
                 userId,
@@ -286,14 +277,23 @@ export default class {
         }
     }
 
-    private checkAuth(req: Request, res: Response, next: NextFunction) {
-        if (req.isAuthenticated())
-            return next();
+    //private checkAuth(req: Request, res: Response, next: NextFunction) {
+    //    if (req.isAuthenticated())
+    //        return next();
 
-        res.redirect('/');
-    }
+    //    res.redirect('/');
+    //}
 
     private authSession = async (req: Request, res: Response, next: NextFunction) => {
+        const version = req.headers.version;
+        if (version != config.clientVersion) {
+            //this.logger.warn(`Client is outdated: ${userName}`);
+            return res.status(401).json({
+                text: "Outdated client",
+                upstream: config.clientVersion
+            });
+        }
+
         const secret = req.headers.authorization?.replace('Bearer ', '');
 
         if (!secret) {
