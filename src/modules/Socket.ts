@@ -50,7 +50,7 @@ export default class {
             });
 
             ws.on('close', async () => {
-                this.logger.log("Client disconnected.");
+                this.logger.log(`Client disconnected: ${ws.userName}`);
                 this.client.part(ws.userName);
                 await this.db.save("session", { userId: ws.userId }, { active: false });
             });
