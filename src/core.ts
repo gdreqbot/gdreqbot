@@ -33,7 +33,7 @@ setInterval(async () => {
 
         for (let i = 0; i < expired.length; i++) {
             if (expired[i].active) {
-                logger.log(`Skipping active session: ${expired[i].userName}`);
+                //logger.log(`Skipping active session: ${expired[i].userName}`);
                 continue;
             }
 
