@@ -93,6 +93,7 @@ class Gdreqbot extends ChatClient {
                 || this.commands.values().find(c => c.config.aliases?.includes(cmdName));
 
             if (!cmd || !cmd.config.enabled) return;
+            if (cmd.config.permLevel > userPerms) return;
 
             try {
                 this.logger.log(`Running command: ${cmd.info.name} in channel: ${channel}`);
