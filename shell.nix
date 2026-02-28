@@ -9,6 +9,5 @@
 
     shellHook = ''
       echo "Shell ready.";
-      exec nvim .;
     '';
 }
