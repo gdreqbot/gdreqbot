@@ -286,11 +286,13 @@ export default class {
 
     private authSession = async (req: Request, res: Response, next: NextFunction) => {
         const version = req.headers.version;
-        if (version != config.clientVersion) {
+        const platform = req.headers.platform;
+
+        if (version != config.clientVersion[platform as "win32" | "darwin" | "linux"]) {
             //this.logger.warn(`Client is outdated: ${userName}`);
             return res.status(401).json({
                 text: "Outdated client",
-                upstream: config.clientVersion
+                upstream: config.clientVersion[platform as "win32" | "darwin" | "linux"]
             });
         }
 
