@@ -5,7 +5,6 @@ import CommandLoader from "../modules/CommandLoader";
 import Logger from "../modules/Logger";
 import Database from "../modules/Database";
 import config from "../config";
-import { unlink } from "fs";
 import fs from "fs";
 import PermLevels from "../structs/PermLevels";
 import { RefreshingAuthProvider } from "@twurple/auth";
@@ -61,7 +60,7 @@ class Gdreqbot extends ChatClient {
                 const { channel, timestamp } = require("../../reboot.json");
                 await this.say(channel, `Rebooted in ${((Date.now() - timestamp) / 1000).toFixed(1)} seconds.`);
 
-                unlink("./reboot.json", () => {});
+                fs.unlink("./reboot.json", () => {});
             } catch {}
 
             this.logger.ready("Ready");
