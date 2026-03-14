@@ -27,10 +27,10 @@ class Gdreqbot extends ChatClient {
             clientId: config.clientId,
             clientSecret: config.clientSecret
         });
-        
+
         authProvider.addUser(config.botId, tokenData);
         authProvider.addIntentsToUser(config.botId, ["chat"]);
-        
+
         authProvider.onRefresh((userId, newTokenData) => {
             fs.writeFileSync(`./tokens.${userId}.json`, JSON.stringify(newTokenData, null, 4), "utf-8");
             new Logger("Client").log("Refreshing token...");
