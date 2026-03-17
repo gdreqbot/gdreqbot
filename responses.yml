@@ -61,7 +61,7 @@ pos:
     alt: "'<name>' is at position <pos> in the queue."
   random:
     base: "Your level (<name>) is at position <pos> in the queue. [RANDOM QUEUE]"
-    alt: "<name>' is at position <pos> in the queue. [RANDOM QUEUE]"
+    alt: "'<name>' is at position <pos> in the queue. [RANDOM QUEUE]"
 
 privilege:
   no_cmd: "Specify a command to run in privilege mode."
