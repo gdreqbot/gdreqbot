@@ -40,6 +40,7 @@ export default class {
                 const msg: SocketMsg = JSON.parse(raw.toString());
 
                 if (!ws.authenticated) return await this.authenticate(ws, msg);
+                console.log("authenticated");
 
                 let res = this.parseResponse(msg.res);
                 if (res) {
@@ -72,9 +73,9 @@ export default class {
         this.wss.close();
     }
 
-    sendFailure(ws: Socket) {
-        this.logger.warn("Failure");
-        ws.send("failure");
+    sendFailure(ws: Socket, code: FailureCode) {
+        this.logger.warn(`Failure: code ${code}`);
+        ws.send(`failure:${code}`);
         ws.close();
     }
 
@@ -108,6 +109,8 @@ export default class {
                 this.logger.warn("Disconnecting client for invalid secret...");
                 ws.close(1008, "Invalid secret");
                 return false;
+            } else if (session.active) {
+                this.sendFailure(ws, FailureCode.DUPLICATE);
             }
 
             ws.authenticated = true;
@@ -121,7 +124,7 @@ export default class {
                 await this.db.save("session", { secret: msg.secret }, { active: true });
                 this.client.say(session.userName, "Thanks for using gdreqbot!");
             } catch {
-                this.sendFailure(ws);
+                this.sendFailure(ws, FailureCode.JOIN);
             }
             return true;
         }
@@ -142,4 +145,9 @@ interface SocketMsg {
 interface Response {
     path: string;
     data?: any;
+}
+
+enum FailureCode {
+    JOIN,
+    DUPLICATE
 }
