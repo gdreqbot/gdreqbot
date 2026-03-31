@@ -12,6 +12,7 @@ import GlobalBl from "./Blacklist";
 
 class Gdreqbot extends ChatClient {
     commands: Map<string, BaseCommand>;
+    dummyCmds: Map<string, BaseCommand>;
     cooldowns: Map<string, Map<string, number>>;
     cmdLoader: CommandLoader;
     logger: Logger;
@@ -42,6 +43,7 @@ class Gdreqbot extends ChatClient {
         });
 
         this.commands = new Map();
+        this.dummyCmds = new Map();
         this.cooldowns = new Map();
         this.cmdLoader = new CommandLoader();
         this.logger = new Logger("Client");
@@ -51,7 +53,7 @@ class Gdreqbot extends ChatClient {
 
         const client = this;
 
-        this.loadCommands();
+        this.loadAllCommands();
 
         this.onConnect(async () => {
             await this.blacklist.init();
@@ -104,14 +106,22 @@ class Gdreqbot extends ChatClient {
         });
     }
 
-    private loadCommands() {
+    private loadAllCommands() {
         const cmdFiles = fs.readdirSync("./dist/commands/").filter(f => f.endsWith(".js"));
+        const dummyFiles = fs.readdirSync("./dist/commands/dummy/").filter(f => f.endsWith(".js"));
 
         for (const file of cmdFiles) {
             const res = this.cmdLoader.load(this, file);
             if (res) this.logger.error(res);
 
             delete require.cache[require.resolve(`../commands/${file}`)];
+        }
+
+        for (const file of dummyFiles) {
+            const res = this.cmdLoader.loadDummy(this, file);
+            if (res) this.logger.error(res);
+
+            delete require.cache[require.resolve(`../commands/dummy/${file}`)];
         }
     }
 }

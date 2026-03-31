@@ -163,7 +163,10 @@ export default class {
         server.get('/stats', (req, res) => {
             let memUsage = `${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB`;
             let dbUsage = `${((fs.statSync('./data/data.db').size) / 1024).toFixed(2)} KB`;
-            let joined = client.db.size("session");
+            let sessions = {
+                saved: client.db.size("session"),
+                active: client.db.load("session", {}, true)?.filter((s: Session) => s.active).length || 0
+            };
             let uptime = moment.duration(process.uptime() * 1000).format(" D [days], H [hrs], m [mins], s [secs]");
             let twVersion = (require('../../package.json').dependencies["@twurple/chat"]).substr(1);
             let exprVersion = (require('../../package.json').dependencies["express"]).substr(1);
@@ -173,7 +176,7 @@ export default class {
             res.render('stats', {
                 memUsage,
                 dbUsage,
-                joined,
+                sessions,
                 uptime,
                 twVersion,
                 exprVersion,
@@ -184,7 +187,7 @@ export default class {
 
         server.get('/commands', (req, res) => {
             res.render('commands', {
-                cmds: this.client.commands.values()
+                cmds: this.client.dummyCmds.values()
                     .filter(cmd => cmd.config.permLevel < PermLevels.DEV)
                     .map(cmd => {
                         return {
