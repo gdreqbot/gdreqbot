@@ -15,7 +15,7 @@ export default class {
     wss: Server;
     db: Database;
     client: Gdreqbot;
-    logger: Logger
+    logger: Logger;
 
     constructor(db: Database, client: Gdreqbot) {
         this.wss = new WebSocket.Server({ port });
@@ -40,7 +40,6 @@ export default class {
                 const msg: SocketMsg = JSON.parse(raw.toString());
 
                 if (!ws.authenticated) return await this.authenticate(ws, msg);
-                console.log("authenticated");
 
                 let res = this.parseResponse(msg.res);
                 if (res) {
@@ -75,7 +74,8 @@ export default class {
 
     sendFailure(ws: Socket, code: FailureCode) {
         this.logger.warn(`Failure: code ${code}`);
-        ws.send(`failure:${code}`);
+        //ws.send(`failure:${code}`);
+        ws.send("failure");  // compatibility hotfix
         ws.close();
     }
 
