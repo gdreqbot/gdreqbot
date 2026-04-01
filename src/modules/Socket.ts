@@ -39,22 +39,37 @@ export default class {
             this.logger.log("Client connected.");
 
             ws.on('message', async raw => {
-                const msg: SocketMsg = JSON.parse(raw.toString());
+                const msg: CmdMsg | AuthMsg = JSON.parse(raw.toString());
 
-                if (!ws.authenticated) return await this.authenticate(ws, msg);
+                if (!ws.authenticated) return await this.authenticate(ws, msg as AuthMsg);
 
-                let res = this.parseResponse(msg.res);
-                if (res) {
-                    let replyTo = msg.msgId ?? null;
-                    this.client.say(ws.userName, res, { replyTo });
-                    this.logger.log(`${!replyTo ? "(auto) " : ""}Ran command: ${msg.res.path.split('.')[0]} in channel: ${ws.userName}`);
+                switch (msg.type) {
+                    case "cmd": {
+                        let cmd: CmdMsg = msg as CmdMsg;
+                        let res = this.parseResponse(cmd.res);
+                        if (res) {
+                            let replyTo = cmd.msgId ?? null;
+                            this.client.say(ws.userName, res, { replyTo });
+                            this.logger.log(`${!replyTo ? "(auto) " : ""}Ran command: ${cmd.res.path.split('.')[0]} in channel: ${ws.userName}`);
+                        }
+                        break;
+                    }
+
+                    default: {
+                        this.logger.debug("auth");
+                        break;
+                    }
                 }
             });
 
             ws.on('close', async () => {
-                this.logger.log(`Client disconnected: ${ws.userName}`);
-                this.client.part(ws.userName);
-                sessions.splice(sessions.findIndex(u => u.userId == ws.userId), 1);
+                if (ws.duplicate) {
+                    this.logger.log("Duplicate client disconnected.");
+                } else {
+                    this.logger.log(`Client disconnected: ${ws.userName}`);
+                    this.client.part(ws.userName);
+                    sessions.splice(sessions.findIndex(u => u.userId == ws.userId), 1);
+                }
             });
 
             ws.on('error', err => {
@@ -97,7 +112,7 @@ export default class {
         return str;
     }
 
-    private async authenticate(ws: Socket, msg: any) {
+    private async authenticate(ws: Socket, msg: AuthMsg) {
         if (!ws.authenticated) {
             if (msg.type != "auth") {
                 this.logger.warn("Disconnecting unauthorized client...");
@@ -119,6 +134,7 @@ export default class {
                 return false;
             } else if (sessions.find(u => u.userId == session.userId)) {
                 this.sendFailure(ws, FailureCode.DUPLICATE);
+                ws.duplicate = true;
                 return false;
             }
 
@@ -146,11 +162,19 @@ interface Socket extends WebSocket {
     authenticated: boolean;
     userId: string;
     userName: string;
+    duplicate: boolean;
 }
 
-interface SocketMsg {
+interface CmdMsg {
+    type: string;
     res: Response;
     msgId?: string;
+}
+
+interface AuthMsg {
+    type: string;
+    secret: string;
+    version: string;
 }
 
 interface Response {
