@@ -7,6 +7,6 @@ export default {
     clientVersion: {
         win32: "1.0.6",
         darwin: "1.0.6",
-        linux: "1.0.6"
+        linux: "1.0.7"
     }
 };

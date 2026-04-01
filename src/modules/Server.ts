@@ -20,6 +20,7 @@ import Database from "./Database";
 import Logger from "./Logger";
 import config from "../config";
 import Socket from "./Socket";
+import { sessions } from "../core";
 
 const port = process.env.SERVER_PORT || 80;
 const hostname = process.env.HOSTNAME || 'localhost';
@@ -134,8 +135,7 @@ export default class {
                     userName,
                     secret,
                     issued: Date.now(),
-                    expires,
-                    active: false
+                    expires
                 });
 
                 this.logger.log(`→   New channel: ${userName}`);
@@ -163,9 +163,9 @@ export default class {
         server.get('/stats', (req, res) => {
             let memUsage = `${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB`;
             let dbUsage = `${((fs.statSync('./data/data.db').size) / 1024).toFixed(2)} KB`;
-            let sessions = {
+            let sessionTypes = {
                 saved: client.db.size("session"),
-                active: client.db.load("session", {}, true)?.filter((s: Session) => s.active).length || 0
+                active: sessions.length
             };
             let uptime = moment.duration(process.uptime() * 1000).format(" D [days], H [hrs], m [mins], s [secs]");
             let twVersion = (require('../../package.json').dependencies["@twurple/chat"]).substr(1);
@@ -176,7 +176,7 @@ export default class {
             res.render('stats', {
                 memUsage,
                 dbUsage,
-                sessions,
+                sessions: sessionTypes,
                 uptime,
                 twVersion,
                 exprVersion,

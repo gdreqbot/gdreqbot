@@ -5,6 +5,8 @@ import Logger from "./Logger";
 import yml from "yaml";
 import fs from "fs";
 import { Session } from "../datasets/session";
+import { sessions } from "../core";
+import config from "../config";
 
 const responses = yml.parse(fs.readFileSync('./responses.yml', 'utf8'));
 
@@ -52,7 +54,7 @@ export default class {
             ws.on('close', async () => {
                 this.logger.log(`Client disconnected: ${ws.userName}`);
                 this.client.part(ws.userName);
-                await this.db.save("session", { userId: ws.userId }, { active: false });
+                sessions.splice(sessions.findIndex(u => u.userId == ws.userId), 1);
             });
 
             ws.on('error', err => {
@@ -74,8 +76,7 @@ export default class {
 
     sendFailure(ws: Socket, code: FailureCode) {
         this.logger.warn(`Failure: code ${code}`);
-        //ws.send(`failure:${code}`);
-        ws.send("failure");  // compatibility hotfix
+        ws.send(`failure:${code}`);
         ws.close();
     }
 
@@ -104,15 +105,22 @@ export default class {
                 return false;
             }
 
+            let [ platform, version ] = msg.version.split(":");
+
+            if (version != config.clientVersion[platform as "win32" | "darwin" | "linux"]) {
+                this.sendFailure(ws, FailureCode.OUTDATED);
+                return false;
+            }
+
             const session: Session = this.db.load("session", { secret: msg.secret });
             if (!session) {
                 this.logger.warn("Disconnecting client for invalid secret...");
                 ws.close(1008, "Invalid secret");
                 return false;
-            } //else if (session.active) {
-                //this.sendFailure(ws, FailureCode.DUPLICATE);
-            //}
-            // compatibility hotfix
+            } else if (sessions.find(u => u.userId == session.userId)) {
+                this.sendFailure(ws, FailureCode.DUPLICATE);
+                return false;
+            }
 
             ws.authenticated = true;
             ws.userId = session.userId;
@@ -122,10 +130,12 @@ export default class {
 
             try {
                 await this.client.join(ws.userName);
-                await this.db.save("session", { secret: msg.secret }, { active: true });
                 this.client.say(session.userName, "Thanks for using gdreqbot!");
+
+                sessions.push({ userId: session.userId, userName: session.userName });
             } catch {
                 this.sendFailure(ws, FailureCode.JOIN);
+                return false;
             }
             return true;
         }
@@ -150,5 +160,6 @@ interface Response {
 
 enum FailureCode {
     JOIN,
-    DUPLICATE
+    DUPLICATE,
+    OUTDATED
 }
