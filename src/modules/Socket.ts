@@ -109,9 +109,10 @@ export default class {
                 this.logger.warn("Disconnecting client for invalid secret...");
                 ws.close(1008, "Invalid secret");
                 return false;
-            } else if (session.active) {
-                this.sendFailure(ws, FailureCode.DUPLICATE);
-            }
+            } //else if (session.active) {
+                //this.sendFailure(ws, FailureCode.DUPLICATE);
+            //}
+            // compatibility hotfix
 
             ws.authenticated = true;
             ws.userId = session.userId;
