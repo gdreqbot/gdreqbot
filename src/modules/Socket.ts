@@ -65,6 +65,8 @@ export default class {
             ws.on('close', async () => {
                 if (ws.duplicate) {
                     this.logger.log("Duplicate client disconnected.");
+                } else if (ws.outdated) {
+                    this.logger.log("Outdated client disconnected.");
                 } else {
                     this.logger.log(`Client disconnected: ${ws.userName}`);
                     this.client.part(ws.userName);
@@ -124,6 +126,7 @@ export default class {
 
             if (version != config.clientVersion[platform as "win32" | "darwin" | "linux"]) {
                 this.sendFailure(ws, FailureCode.OUTDATED);
+                ws.outdated = true;
                 return false;
             }
 
@@ -163,6 +166,7 @@ interface Socket extends WebSocket {
     userId: string;
     userName: string;
     duplicate: boolean;
+    outdated: boolean;
 }
 
 interface CmdMsg {
