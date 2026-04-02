@@ -5,13 +5,11 @@ export const defaultValues: Session = {
     userName: "",
     secret: "",
     issued: 0,
-    expires: 0,
-    active: false
+    expires: 0
 }
 
 export interface Session extends User {
     secret: string;
     issued: number;
     expires: number;
-    active: boolean;
 }

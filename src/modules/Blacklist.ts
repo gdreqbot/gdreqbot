@@ -37,4 +37,8 @@ export default class {
         let data = this.db.get(type);
         return data.find((d: string) => d == query) ? true : false;
     }
+
+    get(type: "users" | "levels") {
+        return this.db.get(type);
+    }
 }

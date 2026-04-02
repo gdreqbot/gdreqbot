@@ -1,10 +1,13 @@
-import { Server, WebSocket } from "ws";
+import { Server as WsServer, WebSocket } from "ws";
 import Database from "./Database";
 import Gdreqbot from "./Bot";
 import Logger from "./Logger";
 import yml from "yaml";
 import fs from "fs";
 import { Session } from "../datasets/session";
+import { sessions } from "../core";
+import config from "../config";
+import Server from "./Server";
 
 const responses = yml.parse(fs.readFileSync('./responses.yml', 'utf8'));
 
@@ -12,16 +15,18 @@ const port = parseInt(process.env.WS_PORT) || 8080;
 const hostname = process.env.HOSTNAME || 'localhost';
 
 export default class {
-    wss: Server;
+    wss: WsServer;
     db: Database;
     client: Gdreqbot;
+    server: Server;
     logger: Logger;
 
-    constructor(db: Database, client: Gdreqbot) {
+    constructor(db: Database, server: Server) {
         this.wss = new WebSocket.Server({ port });
         this.db = db;
         this.logger = new Logger("Socket");
-        this.client = client;
+        this.client = server.client;
+        this.server = server;
 
         setInterval(() => {
             this.wss.clients.forEach(ws => {
@@ -37,22 +42,39 @@ export default class {
             this.logger.log("Client connected.");
 
             ws.on('message', async raw => {
-                const msg: SocketMsg = JSON.parse(raw.toString());
+                const msg: CmdMsg | AuthMsg = JSON.parse(raw.toString());
 
-                if (!ws.authenticated) return await this.authenticate(ws, msg);
+                if (!ws.authenticated) return await this.authenticate(ws, msg as AuthMsg);
 
-                let res = this.parseResponse(msg.res);
-                if (res) {
-                    let replyTo = msg.msgId ?? null;
-                    this.client.say(ws.userName, res, { replyTo });
-                    this.logger.log(`${!replyTo ? "(auto) " : ""}Ran command: ${msg.res.path.split('.')[0]} in channel: ${ws.userName}`);
+                if (this.server.isBlacklisted(ws.userId))
+                    return this.sendFailure(ws, FailureCode.BLACKLISTED);
+
+                switch (msg.type) {
+                    case "cmd": {
+                        let cmd: CmdMsg = msg as CmdMsg;
+                        let res = this.parseResponse(cmd.res);
+                        if (res) {
+                            let replyTo = cmd.msgId ?? null;
+                            this.client.say(ws.userName, res, { replyTo });
+                            this.logger.log(`${!replyTo ? "(auto) " : ""}Ran command: ${cmd.res.path.split('.')[0]} in channel: ${ws.userName}`);
+                        }
+                        break;
+                    }
+
+                    default: {
+                        this.logger.warn("huh?");
+                        break;
+                    }
                 }
             });
 
             ws.on('close', async () => {
                 this.logger.log(`Client disconnected: ${ws.userName}`);
-                this.client.part(ws.userName);
-                await this.db.save("session", { userId: ws.userId }, { active: false });
+
+                if (this.client.currentChannels.includes(`#${ws.userName}`))
+                    this.client.part(ws.userName);
+
+                sessions.splice(sessions.findIndex(u => u.userId == ws.userId), 1);
             });
 
             ws.on('error', err => {
@@ -72,10 +94,14 @@ export default class {
         this.wss.close();
     }
 
-    sendFailure(ws: Socket, code: FailureCode) {
+    sendFailure(ws: Socket, code: FailureCode, platform?: string) {
         this.logger.warn(`Failure: code ${code}`);
-        //ws.send(`failure:${code}`);
-        ws.send("failure");  // compatibility hotfix
+        let str = `failure:${code}`;
+
+        if (code == FailureCode.OUTDATED)
+            str += `:${config.clientVersion[platform as "win32" | "darwin" | "linux"]}`;
+
+        ws.send(str);
         ws.close();
     }
 
@@ -96,23 +122,33 @@ export default class {
         return str;
     }
 
-    private async authenticate(ws: Socket, msg: any) {
+    private async authenticate(ws: Socket, msg: AuthMsg) {
         if (!ws.authenticated) {
             if (msg.type != "auth") {
                 this.logger.warn("Disconnecting unauthorized client...");
-                ws.close(1008, "Auth required");
+                this.sendFailure(ws, FailureCode.UNAUTHORIZED);
+                return false;
+            }
+
+            let [ platform, version ] = msg.version.split(":");
+
+            if (version != config.clientVersion[platform as "win32" | "darwin" | "linux"]) {
+                this.sendFailure(ws, FailureCode.OUTDATED, platform);
                 return false;
             }
 
             const session: Session = this.db.load("session", { secret: msg.secret });
-            if (!session) {
+            if (!session) {  // invalid secret check
                 this.logger.warn("Disconnecting client for invalid secret...");
-                ws.close(1008, "Invalid secret");
+                this.sendFailure(ws, FailureCode.UNAUTHORIZED);
                 return false;
-            } //else if (session.active) {
-                //this.sendFailure(ws, FailureCode.DUPLICATE);
-            //}
-            // compatibility hotfix
+            } else if (sessions.find(u => u.userId == session.userId)) {  // duplicate session check
+                this.sendFailure(ws, FailureCode.DUPLICATE);
+                return false;
+            } else if (this.server.isBlacklisted(session.userId)) {  // blacklist check
+                this.sendFailure(ws, FailureCode.BLACKLISTED);
+                return false;
+            }
 
             ws.authenticated = true;
             ws.userId = session.userId;
@@ -122,10 +158,12 @@ export default class {
 
             try {
                 await this.client.join(ws.userName);
-                await this.db.save("session", { secret: msg.secret }, { active: true });
                 this.client.say(session.userName, "Thanks for using gdreqbot!");
+
+                sessions.push({ userId: session.userId, userName: session.userName });
             } catch {
                 this.sendFailure(ws, FailureCode.JOIN);
+                return false;
             }
             return true;
         }
@@ -136,11 +174,20 @@ interface Socket extends WebSocket {
     authenticated: boolean;
     userId: string;
     userName: string;
+    duplicate: boolean;
+    outdated: boolean;
 }
 
-interface SocketMsg {
+interface CmdMsg {
+    type: string;
     res: Response;
     msgId?: string;
+}
+
+interface AuthMsg {
+    type: string;
+    secret: string;
+    version: string;
 }
 
 interface Response {
@@ -150,5 +197,9 @@ interface Response {
 
 enum FailureCode {
     JOIN,
-    DUPLICATE
+    DUPLICATE,
+    OUTDATED,
+    NO_SECRET,
+    UNAUTHORIZED,
+    BLACKLISTED
 }
