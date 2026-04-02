@@ -25,7 +25,7 @@ export = class GlobalBlCommand extends BaseCommand {
                 await client.blacklist.add(args[2], args[0] as "users" | "levels");
 
                 let session: Session = client.db.load("session", { userId: args[2] });
-                if (session) await client.db.delete("session", { userId: args[0] });
+                if (session) await client.db.delete("session", { userId: args[2] });
 
                 str = "Added";
                 break;

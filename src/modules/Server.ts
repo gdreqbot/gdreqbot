@@ -27,7 +27,7 @@ const hostname = process.env.HOSTNAME || 'localhost';
 
 export default class {
     app: Express;
-    private client: Gdreqbot;
+    client: Gdreqbot;
     server: Server;
     logger: Logger;
     db: Database;
@@ -38,7 +38,7 @@ export default class {
         this.client = client;
         this.db = db;
         this.logger = new Logger("Server");
-        this.socket = new Socket(db, client);
+        this.socket = new Socket(db, this);
 
         const server = this.app;
 
@@ -325,6 +325,10 @@ export default class {
     private normalize(str: string) {
         let normalized = str.toLowerCase();
         return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+    }
+
+    isBlacklisted(userId: string) {
+        return this.client.blacklist.has(userId, "users");
     }
 }
 

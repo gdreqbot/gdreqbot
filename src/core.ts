@@ -29,8 +29,8 @@ setInterval(async () => {
     const logger = new Logger("Cleanup");
 
     try {
-        let sessions: Session[] = database.load("session", {}, true);
-        let expired = sessions?.filter(s => Date.now() > s.expires);
+        let savedSessions: Session[] = database.load("session", {}, true);
+        let expired = savedSessions?.filter(s => Date.now() > s.expires);
 
         if (!expired?.length) return;
 
@@ -41,6 +41,7 @@ setInterval(async () => {
             }
 
             logger.log(`Deleting expired session: ${expired[i].userName}`);
+            sessions.splice(sessions.findIndex(u => u.userId == expired[i].userId), 1)
             await database.delete("session", { secret: expired[i].secret });
         }
     } catch (err) {
