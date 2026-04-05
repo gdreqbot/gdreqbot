@@ -41,7 +41,7 @@ setInterval(async () => {
             }
 
             logger.log(`Deleting expired session: ${expired[i].userName}`);
-            sessions.splice(sessions.findIndex(u => u.userId == expired[i].userId), 1)
+            sessions.splice(sessions.findIndex(u => u.userId == expired[i].userId), 1);
             await database.delete("session", { secret: expired[i].secret });
         }
     } catch (err) {
