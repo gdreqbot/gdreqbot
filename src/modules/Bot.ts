@@ -79,6 +79,7 @@ class Gdreqbot extends ChatClient {
         });
 
         this.onMessage(async (channel, user, text, msg) => {
+            if (msg.userInfo.badges.has("bot-badge")) return;
             if (msg.userInfo.userId == this.config.botId && process.env.ENVIRONMENT != "dev") return;
 
             let userPerms: PermLevels;
