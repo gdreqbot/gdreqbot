@@ -74,7 +74,11 @@ export default class {
                 if (this.client.currentChannels.includes(`#${ws.userName}`))
                     this.client.part(ws.userName);
 
+                //this.logger.debug(`-- sessions before close (${ws.userName}) --`);
+                //console.log(sessions);
                 sessions.splice(sessions.findIndex(u => u.userId == ws.userId), 1);
+                //this.logger.debug(`-- sessions after close (${ws.userName}) --`);
+                //console.log(sessions);
             });
 
             ws.on('error', err => {
@@ -160,7 +164,11 @@ export default class {
                 await this.client.join(ws.userName);
                 this.client.say(session.userName, "Thanks for using gdreqbot!");
 
+                //this.logger.debug(`-- sessions before auth (${ws.userName})`);
+                //console.log(sessions);
                 sessions.push({ userId: session.userId, userName: session.userName });
+                //this.logger.debug(`-- sessions after auth (${ws.userName})`);
+                //console.log(sessions);
             } catch {
                 this.sendFailure(ws, FailureCode.JOIN);
                 return false;
