@@ -76,7 +76,11 @@ export default class {
 
                 //this.logger.debug(`-- sessions before close (${ws.userName}) --`);
                 //console.log(sessions);
-                sessions.splice(sessions.findIndex(u => u.userId == ws.userId), 1);
+                let idx = sessions.findIndex(u => u.userId == ws.userId);
+                if (idx != -1) {
+                    //this.logger.debug(`found idx: ${idx}`);
+                    sessions.splice(idx, 1);
+                }
                 //this.logger.debug(`-- sessions after close (${ws.userName}) --`);
                 //console.log(sessions);
             });
