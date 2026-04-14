@@ -230,7 +230,13 @@ export default class {
         });
 
         server.get('/download', (req, res) => {
-            res.render('download');
+            res.render('download', {
+                versions: {
+                    win32: config.clientVersion.win32,
+                    darwin: config.clientVersion.darwin,
+                    linux: config.clientVersion.linux
+                }
+            });
         });
 
         server.get('/api/me', this.authSession, (req, res) => {
