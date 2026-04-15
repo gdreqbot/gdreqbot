@@ -107,6 +107,9 @@ toggle:
   enabled: "Requests are now enabled."
   disabled: "Requests are now disabled."
 
+version:
+  str: "Client version: <platform> v<version>"
+
 generic:
   error: "An error occurred, please try again. (If the issue persists, please contact the developer)"
   forgot: "the dev forgot what to put here ¯\\_(ツ)_/¯"
