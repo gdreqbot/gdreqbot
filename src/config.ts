@@ -5,8 +5,8 @@ export default {
     ownerId: process.env.OWNER_ID,
     prefix: process.env.PREFIX,
     clientVersion: {
-        win32: "1.1.2",
-        darwin: "1.1.2",
-        linux: "1.1.2"
+        win32: "1.1.3",
+        darwin: "1.1.3",
+        linux: "1.1.3"
     }
 };
