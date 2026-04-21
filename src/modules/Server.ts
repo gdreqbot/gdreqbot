@@ -5,6 +5,7 @@ import express, { NextFunction, Request, Response, Express } from "express";
 import session from "express-session";
 import passport from "passport";
 import { Strategy as twitchStrategy } from "passport-twitch-latest";
+import { Strategy as googleStrategy } from "passport-google-oauth20";
 import bodyParser from "body-parser";
 import { v4 as uuid } from "uuid";
 import path from 'path';
@@ -64,14 +65,30 @@ export default class {
 
         passport.use(
             new twitchStrategy({
-                clientID: this.client.config.clientId,
-                clientSecret: this.client.config.clientSecret,
-                callbackURL: process.env.REDIRECT_URI,
+                clientID: config.twitch.clientId,
+                clientSecret: config.twitch.clientSecret,
+                callbackURL: `${process.env.URL}/auth/twitch/callback`,
                 scope: 'chat:read chat:edit'
             }, async (accessToken, refreshToken, profile, done) => {
                 let user: User = {
                     userId: profile.id,
-                    userName: profile.login
+                    userName: profile.login,
+                    platform: "twitch"
+                };
+                done(null, user);
+            })
+        );
+
+        passport.use(
+            new googleStrategy({
+                clientID: config.google.clientId,
+                clientSecret: config.google.clientSecret,
+                callbackURL: `${process.env.URL}/auth/youtube/callback`
+            }, async (accessToken, refreshToken, profile, done) => {
+                let user: User = {
+                    userId: profile.id,
+                    userName: profile.username,
+                    platform: "youtube"
                 };
                 done(null, user);
             })
@@ -106,7 +123,7 @@ export default class {
             renderView(req, res, 'index');
         });
 
-        server.get('/auth', (req, res, next) => {
+        server.get('/auth/twitch', (req, res, next) => {
             const { redirect_uri } = req.query;
 
             if (!redirect_uri?.toString().startsWith('http://127.0.0.1:'))
@@ -117,7 +134,21 @@ export default class {
             })(req, res, next);
         });
 
-        server.get('/auth/callback', passport.authenticate('twitch', {
+        server.get('/auth/youtube', (req, res, next) => {
+            const { redirect_uri } = req.query;
+
+            if (!redirect_uri?.toString().startsWith('http://127.0.0.1:'))
+                return res.status(400).send('Invalid redirect');
+
+            passport.authenticate('google', {
+                scope: ["https://www.googleapis.com/auth/youtube.readonly"],
+                accessType: "offline",
+                prompt: "consent",
+                state: redirect_uri.toString()
+            })(req, res, next);
+        });
+
+        server.get('/auth/twitch/callback', passport.authenticate('twitch', {
             failureRedirect: '/auth/error'
         }), async (req, res) => {
             let userId = (req.user as User).userId;
@@ -133,6 +164,7 @@ export default class {
                 await this.db.save("session", { userId }, {
                     userId,
                     userName,
+                    platform: "twitch",
                     secret,
                     issued: Date.now(),
                     expires
@@ -150,6 +182,12 @@ export default class {
                 return res.status(500).send('Missing redirect');
 
             res.redirect(`${redirect_uri}?secret=${secret}`);
+        });
+
+        server.get('/auth/youtube/callback', passport.authenticate('google', {
+            failureRedirect: '/auth/error'
+        }), async (req, res) => {
+            console.log(req.user);
         });
 
         server.get('/auth/success', (req, res) => {

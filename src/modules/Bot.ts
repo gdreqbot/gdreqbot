@@ -22,14 +22,14 @@ class Gdreqbot extends ChatClient {
     blacklist: GlobalBl;
 
     constructor(db: Database, options?: ChatClientOptions) {
-        const tokenData = JSON.parse(fs.readFileSync(`./tokens.${config.botId}.json`, "utf-8"));
+        const tokenData = JSON.parse(fs.readFileSync(`./tokens.${config.twitch.botId}.json`, "utf-8"));
         const authProvider = new RefreshingAuthProvider({
-            clientId: config.clientId,
-            clientSecret: config.clientSecret
+            clientId: config.twitch.clientId,
+            clientSecret: config.twitch.clientSecret
         });
 
-        authProvider.addUser(config.botId, tokenData);
-        authProvider.addIntentsToUser(config.botId, ["chat"]);
+        authProvider.addUser(config.twitch.botId, tokenData);
+        authProvider.addIntentsToUser(config.twitch.botId, ["chat"]);
 
         authProvider.onRefresh((userId, newTokenData) => {
             fs.writeFileSync(`./tokens.${userId}.json`, JSON.stringify(newTokenData, null, 4), "utf-8");
@@ -80,11 +80,11 @@ class Gdreqbot extends ChatClient {
 
         this.onMessage(async (channel, user, text, msg) => {
             if (msg.userInfo.badges.has("bot-badge")) return;
-            if (msg.userInfo.userId == this.config.botId && process.env.ENVIRONMENT != "dev") return;
+            if (msg.userInfo.userId == config.twitch.botId && process.env.ENVIRONMENT != "dev") return;
 
             let userPerms: PermLevels;
 
-            if (msg.userInfo.userId == config.ownerId) userPerms = PermLevels.DEV;
+            if (msg.userInfo.userId == config.twitch.ownerId) userPerms = PermLevels.DEV;
             else userPerms = PermLevels.USER;
 
             if (!text.startsWith(config.prefix)) return;
