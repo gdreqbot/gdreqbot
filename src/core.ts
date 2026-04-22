@@ -8,7 +8,7 @@ import { Session } from "./datasets/session";
 import Logger from "./modules/Logger";
 import { User } from "./structs/user";
 
-export const sessions: User[] = [];
+export const sessionCache: User[] = [];
 
 const database = new Database("data.db");
 database.init();
@@ -35,7 +35,7 @@ setInterval(async () => {
         if (!expired?.length) return;
 
         for (let i = 0; i < expired.length; i++) {
-            if (sessions.find(u => u.userId == expired[i].userId)) {
+            if (sessionCache.find(u => u.userId == expired[i].userId)) {
                 //logger.log(`Skipping active session: ${expired[i].userName}`);
                 continue;
             }

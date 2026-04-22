@@ -4,4 +4,10 @@ export interface User {
     platform?: Platform;
 }
 
+export interface Session extends User {
+    secret: string;
+    issued: number;
+    expires: number;
+}
+
 export type Platform = "twitch" | "youtube";

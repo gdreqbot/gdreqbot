@@ -5,7 +5,7 @@ import Logger from "./Logger";
 import yml from "yaml";
 import fs from "fs";
 import { Session } from "../datasets/session";
-import { sessions } from "../core";
+import { sessionCache } from "../core";
 import config from "../config";
 import Server from "./Server";
 
@@ -76,10 +76,10 @@ export default class {
 
                 //this.logger.debug(`-- sessions before close (${ws.userName}) --`);
                 //console.log(sessions);
-                let idx = sessions.findIndex(u => u.userId == ws.userId);
+                let idx = sessionCache.findIndex(u => u.userId == ws.userId);
                 if (idx != -1) {
                     //this.logger.debug(`found idx: ${idx}`);
-                    sessions.splice(idx, 1);
+                    sessionCache.splice(idx, 1);
                 }
                 //this.logger.debug(`-- sessions after close (${ws.userName}) --`);
                 //console.log(sessions);
@@ -150,7 +150,7 @@ export default class {
                 this.logger.warn("Disconnecting client for invalid secret...");
                 this.sendFailure(ws, FailureCode.UNAUTHORIZED);
                 return false;
-            } else if (sessions.find(u => u.userId == session.userId)) {  // duplicate session check
+            } else if (sessionCache.find(u => u.userId == session.userId)) {  // duplicate session check
                 this.sendFailure(ws, FailureCode.DUPLICATE);
                 return false;
             } else if (this.server.isBlacklisted(session.userId)) {  // blacklist check
@@ -170,7 +170,7 @@ export default class {
 
                 //this.logger.debug(`-- sessions before auth (${ws.userName})`);
                 //console.log(sessions);
-                sessions.push({ userId: session.userId, userName: session.userName });
+                sessionCache.push({ userId: session.userId, userName: session.userName });
                 //this.logger.debug(`-- sessions after auth (${ws.userName})`);
                 //console.log(sessions);
             } catch {

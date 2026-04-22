@@ -21,7 +21,7 @@ import Database from "./Database";
 import Logger from "./Logger";
 import config from "../config";
 import Socket from "./Socket";
-import { sessions } from "../core";
+import { sessionCache } from "../core";
 
 const port = process.env.SERVER_PORT || 80;
 const hostname = process.env.HOSTNAME || 'localhost';
@@ -155,7 +155,7 @@ export default class {
             let userName = (req.user as User).userName;
 
             // save user and session secret
-            let session: Session = this.db.load("session", { userId });
+            let session: Session = this.db.load("session", { userId, platform: "twitch" });
             let secret: string;
             let expires = Date.now() + (1000*60*60*24); // 24h
 
@@ -170,10 +170,10 @@ export default class {
                     expires
                 });
 
-                this.logger.log(`→   New channel: ${userName}`);
+                this.logger.log(`→   New Twitch channel: ${userName}`);
             } else {
                 secret = session.secret;
-                await this.db.save("session", { userId }, { expires });
+                await this.db.save("session", { userId, platform: "twitch" }, { expires });
             }
 
             const redirect_uri = req.query.state;
@@ -203,7 +203,7 @@ export default class {
             let dbUsage = `${((fs.statSync('./data/data.db').size) / 1024).toFixed(2)} KB`;
             let sessionTypes = {
                 saved: client.db.size("session"),
-                active: sessions.length
+                active: sessionCache.length
             };
             let uptime = moment.duration(process.uptime() * 1000).format(" D [days], H [hrs], m [mins], s [secs]");
             let twVersion = (require('../../package.json').dependencies["@twurple/chat"]).substr(1);
@@ -296,6 +296,15 @@ export default class {
 
             res.status(200).json({
                 text: this.client.blacklist.has(req.headers.id?.toString(), req.headers.type.toString() as "users" | "levels")
+            });
+        });
+
+        server.get('/api/upstream', (req, res) => {
+            const platform = req.headers.platform ?? "win32";
+
+            return res.json({
+                version: config.clientVersion[platform as "win32" | "darwin" | "linux"],
+                platform
             });
         });
 
