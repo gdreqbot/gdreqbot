@@ -4,6 +4,7 @@ dotenv.config({ quiet: true });
 import express, { NextFunction, Request, Response, Express } from "express";
 import session from "express-session";
 import passport from "passport";
+import superagent from "superagent";
 import { Strategy as twitchStrategy } from "passport-twitch-latest";
 import { Strategy as googleStrategy } from "passport-google-oauth20";
 import bodyParser from "body-parser";
@@ -13,7 +14,7 @@ import moment from "moment";
 import "moment-duration-format";
 import fs from "fs";
 import Gdreqbot from "../modules/Bot";
-import { User } from "../structs/user";
+import { Platform, User } from "../structs/user";
 import PermLevels from "../structs/PermLevels";
 import { Server } from "http";
 import { Session } from "../datasets/session";
@@ -85,14 +86,28 @@ export default class {
                 clientSecret: config.google.clientSecret,
                 callbackURL: `${process.env.URL}/auth/youtube/callback`
             }, async (accessToken, refreshToken, profile, done) => {
-                let user: User = {
-                    userId: profile.id,
-                    userName: profile.username,
-                    platform: "youtube"
-                };
-                done(null, user);
+                try {
+                    let res = await superagent
+                        .get("https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true")
+                        .set("Authorization", `Bearer ${accessToken}`);
+
+                    let channel = res.body.items?.[0];
+                    if (!channel) throw new Error("No YouTube channel");
+
+                    let user: User = {
+                        userId: channel.id,
+                        userName: channel.snippet.title
+                    };
+                    done(null, user);
+                } catch (e) {
+                    done(e);
+                }
             })
         );
+
+        googleStrategy.prototype.userProfile = function(accessToken, done) {
+            done(null, {});
+        }
 
         passport.serializeUser((user: User, done) => {
             done(null, user.userId);
@@ -151,43 +166,13 @@ export default class {
         server.get('/auth/twitch/callback', passport.authenticate('twitch', {
             failureRedirect: '/auth/error'
         }), async (req, res) => {
-            let userId = (req.user as User).userId;
-            let userName = (req.user as User).userName;
-
-            // save user and session secret
-            let session: Session = this.db.load("session", { userId, platform: "twitch" });
-            let secret: string;
-            let expires = Date.now() + (1000*60*60*24); // 24h
-
-            if (!session?.secret) {
-                secret = uuid();
-                await this.db.save("session", { userId }, {
-                    userId,
-                    userName,
-                    platform: "twitch",
-                    secret,
-                    issued: Date.now(),
-                    expires
-                });
-
-                this.logger.log(`→   New Twitch channel: ${userName}`);
-            } else {
-                secret = session.secret;
-                await this.db.save("session", { userId, platform: "twitch" }, { expires });
-            }
-
-            const redirect_uri = req.query.state;
-
-            if (!redirect_uri)
-                return res.status(500).send('Missing redirect');
-
-            res.redirect(`${redirect_uri}?secret=${secret}`);
+            await this.authCallback(req, res, "twitch");
         });
 
         server.get('/auth/youtube/callback', passport.authenticate('google', {
             failureRedirect: '/auth/error'
         }), async (req, res) => {
-            console.log(req.user);
+            await this.authCallback(req, res, "youtube");
         });
 
         server.get('/auth/success', (req, res) => {
@@ -373,6 +358,40 @@ export default class {
 
         req.user = session;
         next();
+    }
+
+    private authCallback = async (req: Request, res: Response, platform: Platform) => {
+        let userId = (req.user as User).userId;
+        let userName = (req.user as User).userName;
+
+        // save user and session secret
+        let session: Session = this.db.load("session", { userId, platform });
+        let secret: string;
+        let expires = Date.now() + (1000*60*60*24); // 24h
+
+        if (!session?.secret) {
+            secret = uuid();
+            await this.db.save("session", { userId }, {
+                userId,
+                userName,
+                platform,
+                secret,
+                issued: Date.now(),
+                expires
+            });
+
+            this.logger.log(`→   New ${platform == "twitch" ? "Twitch" : "YouTube"} channel: ${userName}`);
+        } else {
+            secret = session.secret;
+            await this.db.save("session", { userId, platform }, { expires });
+        }
+
+        const redirect_uri = req.query.state;
+
+        if (!redirect_uri)
+            return res.status(500).send('Missing redirect');
+
+        res.redirect(`${redirect_uri}?secret=${secret}`);
     }
 
     private normalize(str: string) {
